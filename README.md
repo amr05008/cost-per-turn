@@ -1,29 +1,36 @@
 # cost-per-turn
 
-Measure what your agent work actually costs.
+A running public repo for one question: **what does your agent work actually
+cost?**
 
-Claude Code has been writing per-turn token usage to disk for every session you
-have ever run. `analyze-history.py` reads those transcripts, prices each turn
-against a date-stamped price sheet, and gives you a baseline — cost per turn
-across a session, your real cache hit rate, and spend grouped by repo.
+Most people running Claude Code have no live visibility into spend, context
+burn, or rate-limit consumption — you find out when you hit a wall. This repo
+is where I build and host the tools that make those numbers visible, and run
+the experiments that explain them.
 
-No new instrumentation. No account linking. Nothing leaves your machine.
+Everything here is local-first: Python 3.10+, standard library only, nothing
+leaves your machine.
 
-```bash
-python3 analyze-history.py --list-repos          # see what's on disk
-python3 analyze-history.py --repo my-project     # analyse just that repo
-```
+## What's here
 
-Python 3.10+, standard library only.
+| file | what it is |
+| --- | --- |
+| `statusline.py` | A live cost meter for your terminal — session cost, context usage, and rate-limit bars in Claude Code's status line |
+| `status-line-prompts.md` | The exact prompts used to build and customize the status line |
+| `analyze-history.py` | Prices your entire Claude Code transcript history against a date-stamped price sheet — cost per turn, cache hit rate, spend by repo |
+| `prices.json` | The date-stamped model price sheet `analyze-history.py` bills against |
+| `tests/` | A synthetic fixture so you can run the analyzer with zero session history of your own |
+
+More experiments land here as they run. The status line is the front door;
+the history analyzer is the record.
 
 ## Start here: put a cost meter in your terminal
 
-Before analysing anything, make the number visible while you work. Claude Code
-has a built-in **status line** — it runs a command you specify, pipes it JSON
+This is the tool from the video
+([watch it here](https://www.youtube.com/watch?v=I2a0EJ67cVo)). Claude Code has
+a built-in **status line** — it runs a command you specify, pipes it JSON
 about the current session, and prints whatever your command returns at the
-bottom of the terminal.
-
-`statusline.py` in this repo is a ready-made one:
+bottom of the terminal. `statusline.py` is a ready-made one:
 
 ```
 📁 widget-shop │ ⏱ 15m 32s │ ▲ +118 -40 │ ◔ 380k/1000k ▓▓▓░░░░░ 38% │ $2.47 │ 5h ▓░░░░░░░ 22% │ 7d ▓▓▓▓░░░░ 61% │ ◆ Opus 5
@@ -59,6 +66,11 @@ echo '{"workspace":{"current_dir":"/tmp/demo"},"cost":{"total_cost_usd":2.47},
 "model":{"display_name":"Opus 5"}}' | python3 statusline.py
 ```
 
+Don't want to copy mine? Build your own — the prompts I used are in
+[`status-line-prompts.md`](status-line-prompts.md), and the
+[status line docs](https://code.claude.com/docs/en/statusline) cover the JSON
+payload. It's just a script; make it yours.
+
 The minimum useful version is four lines — everything else is decoration:
 
 ```python
@@ -68,11 +80,25 @@ print(f"{os.path.basename(d.get('workspace',{}).get('current_dir',''))} "
       f"· ${(d.get('cost') or {}).get('total_cost_usd') or 0:.2f}")
 ```
 
-**What it shows you is per-session, live, and gone when the session ends.** That
-is exactly the gap `analyze-history.py` fills — the status line is the gauge,
-the script is the record.
+**What the status line shows you is per-session, live, and gone when the
+session ends.** That is exactly the gap the analyzer fills — the status line
+is the gauge, the analyzer is the record.
 
-## What you get
+## The analyzer: price your entire history
+
+Claude Code has been writing per-turn token usage to disk for every session you
+have ever run. `analyze-history.py` reads those transcripts, prices each turn
+against `prices.json`, and gives you a baseline — cost per turn across a
+session, your real cache hit rate, and spend grouped by repo.
+
+No new instrumentation. No account linking. Nothing leaves your machine.
+
+```bash
+python3 analyze-history.py --list-repos          # see what's on disk
+python3 analyze-history.py --repo my-project     # analyse just that repo
+```
+
+### What you get
 
 ```
 1. COST PER TURN ACROSS A LONG SESSION  (the curve)
@@ -89,14 +115,11 @@ the script is the record.
    ...
 ```
 
-Plus two CSVs in `out/`:
+Plus two CSVs in `out/` (`sessions.csv`, one row per session; `turns.csv`, one
+row per API request). Both are gitignored — the script is the artifact; your
+data never is.
 
-| file | one row per | use it for |
-| --- | --- | --- |
-| `sessions.csv` | session | totals, wall clock, per-session cache hit rate |
-| `turns.csv` | API request | plotting the cost curve; nothing reads it yet |
-
-## The `--repo` filter is required
+### The `--repo` filter is required
 
 Not an option — a required argument. Transcripts on a working machine mix
 personal projects with whatever else you have opened Claude Code in, and a
@@ -107,10 +130,7 @@ deliberate act rather than a forgotten flag.
 `--list-repos` prints repo names and session counts only — no tokens, no costs,
 no content — so you can choose a filter without reading anything into the CSVs.
 
-**`out/` is gitignored, and so is every CSV.** The script is the thing worth
-publishing; the data never is.
-
-## Prices live in `prices.json`, never in the script
+### Prices live in `prices.json`, never in the script
 
 Every historical cost number is only meaningful against a known price sheet, so
 the sheet is a separate, date-stamped file. To reprice history against different
@@ -130,7 +150,7 @@ Two things the sheet gets right that are easy to get wrong:
 If a model appears in a transcript but not in the sheet, its turns are counted,
 priced at zero, and named in the output — never silently dropped.
 
-## The one thing you must not do: sum the JSONL lines
+### The one thing you must not do: sum the JSONL lines
 
 Claude Code writes **one line per content block** of an assistant message — the
 thinking block, the text block, and each `tool_use` block are separate lines —
@@ -155,7 +175,7 @@ Two related shapes worth knowing:
 - **`<synthetic>` model lines** are locally generated and carry an all-zero
   usage block. Priced at zero, counted separately, so turn counts stay honest.
 
-## Running it on a clean machine
+### Running it on a clean machine
 
 A synthetic fixture ships with the repo so you can run the whole thing without
 any session history of your own:
@@ -171,7 +191,7 @@ nested subagent transcript, a `<synthetic>` line, and non-assistant lines with
 no usage at all. Regenerate it deterministically with
 `python3 tests/make_fixture.py`.
 
-## Caveats
+### Caveats
 
 - **Machine-scoped.** Transcripts are per-machine. Run it on each machine and
   merge on `session_id`.
@@ -183,9 +203,10 @@ no usage at all. Regenerate it deterministically with
 - **Turn = one API request**, not one thing you typed. A single prompt usually
   costs several turns.
 
-## Scope
+## Where this is going
 
-This is step one of a larger rig: establish a baseline from history that already
-exists, before optimising anything. The experiment runner, the pass/fail
-grading, and the analytics pipeline are deliberately not built yet — a
-half-built harness is an invitation to skip the baseline.
+Step one was the baseline: make spend visible live (the status line) and
+measurable after the fact (the analyzer). Next up are the experiments that
+baseline makes possible — what different workflows actually cost, where the
+cache earns its keep, and what changes when you switch models. Results and
+tooling land in this repo as they run.
