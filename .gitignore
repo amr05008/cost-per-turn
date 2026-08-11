@@ -1,0 +1,16 @@
+# Data outputs — NEVER commit. The script is the artifact; the data is not.
+# Everything under out/ is derived from real Claude Code transcripts, which
+# include work-adjacent sessions. Only the code is publishable.
+out/
+*.csv
+*.jsonl
+*.tsv
+
+# Except the synthetic fixture, which contains no real session data.
+!tests/fixtures/**/*.jsonl
+
+# Local scratch
+.venv/
+__pycache__/
+*.pyc
+.DS_Store

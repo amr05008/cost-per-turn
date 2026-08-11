@@ -1,0 +1,105 @@
+{
+  "_comment": [
+    "Date-stamped price sheet. Every historical cost number is only meaningful",
+    "against a known price sheet, so this file is versioned and never inlined",
+    "into the script. To reprice history against a different date, copy this",
+    "file, edit it, and pass --prices.",
+    "",
+    "Units: USD per 1,000,000 tokens.",
+    "",
+    "Cache multipliers relative to the model's input rate (verified against",
+    "Anthropic pricing docs on the as_of date, not assumed):",
+    "  cache_read       = 0.10x input",
+    "  cache_write_5m   = 1.25x input   (ephemeral_5m_input_tokens)",
+    "  cache_write_1h   = 2.00x input   (ephemeral_1h_input_tokens)",
+    "The two cache-write rates are NOT the same. Claude Code uses both TTLs in",
+    "the same session, so pricing cache_creation_input_tokens at a single rate",
+    "is wrong. Split it on usage.cache_creation.ephemeral_{1h,5m}_input_tokens.",
+    "",
+    "These are first-party Anthropic API list rates. If the sessions were run",
+    "under a Claude subscription plan, the resulting dollar figures are",
+    "'equivalent API cost', not money actually billed. Say so when publishing."
+  ],
+
+  "as_of": "2026-08-01",
+  "currency": "USD",
+  "unit": "per_1m_tokens",
+
+  "models": {
+    "claude-fable-5": {
+      "input": 10.0,
+      "output": 50.0,
+      "cache_read": 1.0,
+      "cache_write_5m": 12.5,
+      "cache_write_1h": 20.0
+    },
+    "claude-opus-5": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_read": 0.5,
+      "cache_write_5m": 6.25,
+      "cache_write_1h": 10.0,
+      "note": "1M context is the default and the maximum; no long-context premium."
+    },
+    "claude-opus-4-8": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_read": 0.5,
+      "cache_write_5m": 6.25,
+      "cache_write_1h": 10.0
+    },
+    "claude-opus-4-7": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_read": 0.5,
+      "cache_write_5m": 6.25,
+      "cache_write_1h": 10.0
+    },
+    "claude-opus-4-6": {
+      "input": 5.0,
+      "output": 25.0,
+      "cache_read": 0.5,
+      "cache_write_5m": 6.25,
+      "cache_write_1h": 10.0
+    },
+    "claude-sonnet-5": {
+      "input": 2.0,
+      "output": 10.0,
+      "cache_read": 0.2,
+      "cache_write_5m": 2.5,
+      "cache_write_1h": 4.0,
+      "note": "Introductory rate, in effect through 2026-08-31. Standard rate is 3.00 / 15.00 (cache_read 0.30, write_5m 3.75, write_1h 6.00). All sessions analysed on the as_of date fall inside the introductory window."
+    },
+    "claude-sonnet-4-6": {
+      "input": 3.0,
+      "output": 15.0,
+      "cache_read": 0.3,
+      "cache_write_5m": 3.75,
+      "cache_write_1h": 6.0
+    },
+    "claude-haiku-4-5-20251001": {
+      "input": 1.0,
+      "output": 5.0,
+      "cache_read": 0.1,
+      "cache_write_5m": 1.25,
+      "cache_write_1h": 2.0
+    },
+    "<synthetic>": {
+      "input": 0.0,
+      "output": 0.0,
+      "cache_read": 0.0,
+      "cache_write_5m": 0.0,
+      "cache_write_1h": 0.0,
+      "note": "Claude Code writes locally-generated assistant lines with model '<synthetic>' and an all-zero usage block. Priced at zero so they never contribute cost, and counted separately so turn counts stay honest."
+    }
+  },
+
+  "aliases": {
+    "_comment": "Model strings that appear in transcripts but resolve to a priced entry above. A [1m] suffix is a context-window selection, not a separate price tier.",
+    "claude-opus-5[1m]": "claude-opus-5",
+    "claude-opus-4-8[1m]": "claude-opus-4-8",
+    "claude-fable-5[1m]": "claude-fable-5",
+    "claude-sonnet-5[1m]": "claude-sonnet-5",
+    "claude-haiku-4-5": "claude-haiku-4-5-20251001"
+  }
+}
