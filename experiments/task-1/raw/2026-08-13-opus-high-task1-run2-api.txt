@@ -1,0 +1,270 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog API key associated with this project to analyze the last 30   
+  days of data for GlutenOrNot. What are your top 3 insights? What 3 action     
+  items should I prioritize for further investigation to improve this app?      
+
+⏺ I'll start with the debug skill (it covers this project's PostHog setup) and
+  check the analytics contract.
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+  Read 2 files, listed 1 directory (ctrl+o to expand)
+
+⏺ Skill(posthog:querying-posthog-data)
+  ⎿  Successfully loaded skill
+
+⏺ Bash(KEY=$(grep '^POSTHOG_PERSONAL_API_KEY=' .env | cut -d= -f2- | tr -d
+      '"'"'"' ') && curl -s -X POST
+      "https://us.posthog.com/api/projects/457245/query/" -H "Author…)
+  ⎿  {"cache_key":"cache_457245_a2513b52f28becd81da2bf7c4fff06dfa6cca141756
+     8c707ad4d7016dc74e086","cache_target_age":"2026-08-13T23:13:23.692410Z
+     ","calculation_trigger":null,"clickhouse":"SELECT\n    events.event AS
+     … +40 lines (ctrl+o to expand)
+
+  Made 1 scratchpad edit +8 (ctrl+o to expand)
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad && chmod +x ph.sh
+      echo "=== ALL EVENTS 30d ==="…)
+  ⎿  === ALL EVENTS 30d ===
+     event      n       ids     persons first   last
+     scan       430     89      89      2026-07-14T23:01:50.627000Z     2026-08-
+     Z
+     … +16 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== PROPERTY KEYS (scan) ==="…)
+  ⎿  === PROPERTY KEYS (scan) ===
+     k  n
+     $ip        430
+     … +34 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== PLATFORM x EVENT ==="…)
+  ⎿  === PLATFORM x EVENT ===
+     platform   event   n       users
+     ios        scan    425     86
+     … +61 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== OCR: image_kb / ocr_chars, success vs…)
+  ⎿  === OCR: image_kb / ocr_chars, success vs fail ===
+     event      reason  n       avg_kb  p50_kb  p10_kb  p90_kb  avg_chars
+     scan_failed        ocr_failed      34      231.0   180.0   36.0    421.0
+     … +23 lines (ctrl+o to expand)
+
+
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== image_kb threshold separation (OCR on…)
+  ⎿  === image_kb threshold separation (OCR only) ===
+     kb_band    ok      fail
+     a <100     3       11
+     … +30 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== barcode outcomes by country ==="…)
+  ⎿  === barcode outcomes by country ===
+     cc ok      ok_no_ing       not_found
+     US 161     33      12
+     … +24 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== OCR failures per person ==="…)
+  ⎿  === OCR failures per person ===
+     distinct_id        city    cc      ocr_fail        ocr_ok  total   first
+     a2bd8e2ffce24e81   Brooklyn        US      10      11      31      2026-07-
+     … +28 lines (ctrl+o to expand)
+
+
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== active-day distribution ==="…)
+  ⎿  === active-day distribution ===
+     active_days        n_ids   events
+     1  80      236
+     … +42 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+⏺ Bash(sed -n '1,80p' api/_analytics.js)
+  ⎿  /**
+      * Scan-event analytics (PostHog)
+      *
+     … +77 lines (ctrl+o to expand)
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== OCR kb bands EXCLUDING Cupertino + un…)
+  ⎿  === OCR kb bands EXCLUDING Cupertino + unknown-platform burst ids ===
+     kb_band    ok      fail
+     a <200     11      0
+     … +29 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== successful OCR scans with tiny ocr_ch…)
+  ⎿  === successful OCR scans with tiny ocr_chars ===
+     chars      kb      verdict conf    mode    city    timestamp
+     3.0        750.0   safe    low     label   Brooklyn        2026-07-19T10:36:24.001000Z
+     … +31 lines (ctrl+o to expand)
+
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/11cc8bfa
+      -191f-4e12-9dd9-b33fd52ad07c/scratchpad
+      echo "=== does a no-ingredient barcode scan get…)
+  ⎿  === does a no-ingredient barcode scan get retried via OCR? (next event
+      within 5 min) ===
+     kind       n       then_ocr        session_ended
+     … +3 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ I pulled the full 30 days (Jul 14 – Aug 13) via the project's
+  POSTHOG_PERSONAL_API_KEY against project 457245. Baseline: 494 scan attempts, 
+  430 successes (87%), 89 distinct IDs. Backend is genuinely clean — 1
+  claude_error in 494 attempts, zero server_error, zero rate_limited. So nothing
+  here is an outage story; it's all product.
+
+  Top 3 insights
+
+  1. One in five barcode scans returns a verdict built on no ingredient data — 
+  and users act on it anyway.
+
+  62 of 280 barcode successes (22%) carry had_ingredient_data=false. Every
+  single one maps deterministically to caution + low confidence. Add the 26
+  not_found and 29% of barcode attempts produce nothing substantive.
+
+  The behavioral half is what makes this the top finding. I looked at what the
+  user does next:
+
+  ┌───────────────────────────────────┬─────┬────────────────────────────┐
+  │              Outcome              │  n  │ Retried with camera ≤5 min │
+  ├───────────────────────────────────┼─────┼────────────────────────────┤
+  │ not_found ("we couldn't find it") │ 26  │ 16 (62%)                   │
+  ├───────────────────────────────────┼─────┼────────────────────────────┤
+  │ Verdict, no ingredient data       │ 62  │ 15 (24%)                   │
+  ├───────────────────────────────────┼─────┼────────────────────────────┤
+  │ Verdict, real ingredients         │ 218 │ 31 (14%)                   │
+  └───────────────────────────────────┴─────┴────────────────────────────┘
+
+  When the app admits it failed, users fall back to the camera at 62%. When it
+  hands back a content-free caution, retry sits at 24% — barely above the 14%
+  baseline for a normal, fully-grounded scan. 47 of 62 times the user walked 
+  away holding a gluten verdict derived from zero ingredient text. That's the
+  app's least-safe output wearing the same UI as its best one. Source mix: 47
+  Open Food Facts records with no ingredient field, 15 from UPCitemdb (which
+  never returns ingredients at all).
+
+  2. The OCR "failure rate" is mostly Apple, and the real failures are aiming, 
+  not blur.
+
+  Headline OCR failure looks like 36/186 (19%). But 14 of those come from
+  Cupertino IPs and unknown-platform burst sessions — three tight clusters (Jul
+  20, Jul 28, Aug 3; 3–6 attempts in under 3 minutes each) that are App Store
+  review sessions. Every Apple review session hit 100% OCR failure and zero 
+  successes. Strip those and real-user OCR runs 146 ok / 11 fail = 93%.
+
+  This settles the open 1.4.2 question in
+  plans/ocr-capture-assist-2026-07-18.md. image_kb vs. success, real iOS users
+  only:
+
+  ┌──────────┬─────┬──────┐
+  │ image_kb │ ok  │ fail │
+  ├──────────┼─────┼──────┤
+  │ <200     │ 11  │ 0    │
+  ├──────────┼─────┼──────┤
+  │ 200–299  │ 17  │ 1    │
+  ├──────────┼─────┼──────┤
+  │ 300–399  │ 33  │ 4    │
+  ├──────────┼─────┼──────┤
+  │ 400+     │ 73  │ 5    │
+  └──────────┴─────┴──────┘
+
+  Small images never failed. Failures cluster in large, richly-detailed images 
+  that yielded zero text — camera pointed at the front of the pack, not the
+  ingredient panel. The Brooklyn user's Jul 20 session is the archetype: 873 KB
+  → 428 KB → 405 KB, all zero chars, then 402 KB → 656 chars once they found the
+  right side of the box. Confirms the earlier "framing guidance, not blur" read
+  and kills the blur-gate idea.
+
+  One safety edge case fell out: on 2026-07-19 a scan with 3 characters of
+  extracted OCR text returned verdict safe. Low confidence, but "safe" is the
+  word a celiac acts on. Everything else under 200 chars correctly degraded to
+  caution.
+
+  3. You cannot measure retention, and you can't attribute anything to a 
+  release.
+
+  distinct_id is a SHA-256 of the client IP, so a user on cellular becomes a new
+  person every session. 80 of 97 IDs appear on exactly one day — that number is
+  meaningless as churn. Meanwhile 3 IDs account for 31% of all events; the
+  heaviest ([TOWN-GB], GB — 84 events over 12 days) went silent Aug 2 and there
+  is no way to tell whether they churned or just changed networks. And because
+  events ship server-side via posthog-node, $lib_version is 4.18.0 for all 494 —
+  there is no app version on any event, so you can't tell whether 1.4.1's
+  capture work changed anything.
+
+  Two smaller things in the same data: GB is 34% of volume (168 events, 27 IDs)
+  with AU and CA behind it — the international traffic is English-speaking, and
+  detected_language fired 6 times in 30 days, so the ES/NL/CA/FR vocabulary work
+  is not what your travelers need. And the web app is functionally dead: 3
+  scans by 2 IDs in 30 days vs. 425 on iOS.
+
+  3 action items to prioritize
+
+  1. Fix identity and version stamping before investigating anything else.
+  Generate a random install-scoped UUID on device (store it via
+  mobile/services/storage.ts, per the CLAUDE.md rule), send it as distinct_id,
+  and add app_version to every event. This is strictly more private than the
+  current IP hash, so the privacy invariant is safe. Until it exists, retention,
+  DAU, per-release comparison, and clean filtering of App Store review traffic
+  are all guesswork — and every other item below is unmeasurable.
+
+  2. Investigate the ingredient-less barcode verdict as a distinct product 
+  state. The question to answer: should had_ingredient_data=false even render as
+  a verdict? The retry data says users read it as one. Candidate to test:
+  replace it with an explicit "found the product, but not its ingredients —
+  photograph the label" state with a one-tap handoff into the OCR camera, and
+  see whether the 24% retry rate moves toward the 62% that not_found already
+  achieves. Also worth checking whether UPCitemdb (15 scans, never has
+  ingredients) should be routed to this state unconditionally rather than
+  through the verdict path.
+
+  3. Rework OCR capture guidance around aiming, and floor the safe verdict. Two
+  things from the same evidence. (a) The fix is on-screen framing help — a
+  label-shaped guide and "point at the ingredients list, not the front of the
+  pack" — not a blur/size gate, which the data shows would fire on images that
+  succeed. Design it assuming a reviewer who points the camera at a desk, since
+  that's exactly what Apple does and they have now had three consecutive
+  all-failure sessions. (b) Add a floor so a sub-threshold ocr_chars extraction
+  can never return safe; caution is the correct floor when there's nearly no
+  text.
+
+  Two things I'd explicitly deprioritize on this data: further multilingual
+  vocabulary work (6 events in 30 days) and the web PWA (3 scans in 30 days).
+
+  Want me to write this up as a shareable artifact, or open the aiming-guidance
+  work against plans/ocr-capture-assist-2026-07-18.md?
+
+✻ Baked for 6m 20s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data; I've finished that and delivered three insights plus three prioritized action items. Next: tell me whether to publish this as a shareable artifact or start the OCR aiming-guidance work. (disable recaps in /config)

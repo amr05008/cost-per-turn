@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Go Get Yourself a Personal Agent</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161923; --ink:#f2f4f8; --dim:#a5adbd;
+    --accent:#7cc4ff; --accent2:#ffcf6b; --line:#2a2f3d; --good:#7ee2b8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink); overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #stage{position:fixed; inset:0; display:flex; align-items:center; justify-content:center}
+  .slide{
+    position:absolute; inset:0; display:none; flex-direction:column;
+    justify-content:center; padding:5vh 7vw 9vh; animation:in .28s ease-out;
+  }
+  .slide.on{display:flex}
+  @keyframes in{from{opacity:0; transform:translateY(14px)}to{opacity:1; transform:none}}
+
+  .kicker{
+    font-size:1.5vh; letter-spacing:.22em; text-transform:uppercase;
+    color:var(--accent); font-weight:700; margin-bottom:2.2vh;
+  }
+  h1{font-size:7.2vh; line-height:1.04; letter-spacing:-.025em; font-weight:800}
+  h2{font-size:5.1vh; line-height:1.1; letter-spacing:-.02em; font-weight:750; margin-bottom:3.4vh}
+  .sub{font-size:2.9vh; color:var(--dim); line-height:1.45; margin-top:3vh; max-width:56ch}
+  .big{font-size:4.4vh; line-height:1.35; font-weight:600; max-width:24ch}
+  .big em{color:var(--accent2); font-style:normal}
+
+  ul{list-style:none; max-width:70ch}
+  li{
+    font-size:2.85vh; line-height:1.4; margin-bottom:2.3vh;
+    padding-left:3.4vh; position:relative; color:#e4e8f0;
+  }
+  li::before{
+    content:""; position:absolute; left:0; top:1.55vh;
+    width:1.3vh; height:1.3vh; border-radius:50%;
+    background:var(--accent); opacity:.85;
+  }
+  li b{color:#fff; font-weight:700}
+  li span{color:var(--dim)}
+
+  .cols{display:flex; gap:5vw; align-items:flex-start}
+  .cols > div{flex:1}
+  .cols h3{
+    font-size:1.6vh; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--accent2); margin-bottom:2.2vh; font-weight:700;
+  }
+  .cols li{font-size:2.35vh; margin-bottom:1.7vh}
+  .cols li::before{top:1.2vh; width:1vh; height:1vh}
+
+  .cards{display:flex; gap:2.2vw; margin-top:1vh}
+  .card{
+    flex:1; background:var(--panel); border:1px solid var(--line);
+    border-radius:14px; padding:3.4vh 2.4vw;
+  }
+  .card .n{font-size:5.6vh; font-weight:800; color:var(--accent); line-height:1}
+  .card .l{font-size:2.1vh; color:var(--dim); margin-top:1.4vh; line-height:1.35}
+
+  .chips{display:flex; flex-wrap:wrap; gap:1.4vh 1.2vw; max-width:70ch; margin-top:1vh}
+  .chip{
+    background:var(--panel); border:1px solid var(--line); border-radius:999px;
+    padding:1.3vh 1.7vw; font-size:2.1vh; color:#e4e8f0;
+  }
+  .chip b{color:var(--accent); font-weight:700}
+
+  code, .mono{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  pre{
+    background:#0a0c11; border:1px solid var(--line); border-left:3px solid var(--accent);
+    border-radius:10px; padding:2.4vh 2vw; font-size:2.05vh; color:var(--good);
+    overflow:auto; margin-top:2.6vh; max-width:72ch;
+  }
+  .quote{
+    border-left:3px solid var(--accent2); padding-left:2.4vw;
+    font-size:3.4vh; line-height:1.4; max-width:34ch; color:#eef1f6;
+  }
+  .flow{display:flex; align-items:center; gap:1.4vw; flex-wrap:wrap; margin-top:1vh}
+  .node{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding:2.4vh 1.8vw; font-size:2.15vh; text-align:center; min-width:15vh;
+  }
+  .node b{display:block; font-size:2.5vh; color:var(--accent); margin-bottom:.7vh}
+  .node span{color:var(--dim); font-size:1.85vh}
+  .arrow{color:var(--dim); font-size:3vh}
+  .warn{
+    margin-top:3vh; font-size:2.2vh; color:var(--accent2);
+    background:rgba(255,207,107,.09); border:1px solid rgba(255,207,107,.28);
+    border-radius:10px; padding:1.8vh 1.6vw; max-width:52ch;
+  }
+
+  /* chrome */
+  #bar{position:fixed; top:0; left:0; height:3px; background:var(--accent); width:0; transition:width .25s; z-index:20}
+  #num{position:fixed; bottom:2.6vh; right:3vw; font-size:1.7vh; color:#5e6779; z-index:20}
+  #hint{position:fixed; bottom:2.6vh; left:3vw; font-size:1.6vh; color:#5e6779; z-index:20}
+  #hint b{color:#8b94a6}
+
+  #notes{
+    position:fixed; left:0; right:0; bottom:0; max-height:44vh; overflow:auto;
+    background:#0a0c11; border-top:2px solid var(--accent);
+    padding:3vh 4vw 3.4vh; display:none; z-index:30;
+  }
+  #notes.on{display:block}
+  #notes h4{
+    font-size:1.5vh; letter-spacing:.2em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:1.6vh; font-weight:700;
+  }
+  #notes .body{font-size:2.15vh; line-height:1.6; color:#d3d9e4; max-width:105ch}
+  #notes .body p{margin-bottom:1.2vh}
+  #notes .body strong{color:#fff}
+  #notes .time{color:var(--accent2); font-weight:700}
+  body.notes-on .slide{padding-bottom:47vh; justify-content:flex-start; padding-top:7vh}
+
+  @media print{
+    body,html{overflow:visible; height:auto; background:#fff}
+    #bar,#hint,#num{display:none}
+    .slide{
+      display:flex!important; position:relative; page-break-after:always;
+      height:100vh; animation:none;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+<div id="stage">
+
+<!-- 1 -->
+<section class="slide" data-notes="
+<p><span class='time'>0:00 - 1:30</span> &mdash; Open here. Do <strong>not</strong> read the slide.</p>
+<p>Cold open, personal: &lsquo;A year of tinkering with AI. Out of all of it, one thing actually stuck and changed my daily habits &mdash; and it&rsquo;s not a product any of us shipped.&rsquo;</p>
+<p>Set the frame for a <strong>PM audience</strong>: this is not a build-it tutorial. It&rsquo;s about what changes when an assistant is <em>always on</em> and reachable from your pocket. Ask them to hold one question the whole talk: <strong>&lsquo;what would I delegate if I had this?&rsquo;</strong></p>
+<p>Promise the payoff: by the end they&rsquo;ll know exactly what to buy, install, and try this weekend.</p>">
+  <div class="kicker">Internal PM Session</div>
+  <h1>Go get yourself<br>a personal agent.</h1>
+  <p class="sub">An always-on assistant I can reach from anywhere &mdash; and why it&rsquo;s the foundation I now build everything else on.</p>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-notes="
+<p><span class='time'>1:30 - 3:30</span> &mdash; The whole architecture in one slide, so nobody spends the talk wondering &lsquo;but what <em>is</em> it?&rsquo;</p>
+<p>Walk it left to right: <strong>two machines</strong> (a Raspberry Pi 5 named &lsquo;Pi Pi&rsquo;, and &lsquo;Agent M1&rsquo; on an old laptop) &rarr; <strong>one shared memory</strong> in GitHub &rarr; <strong>Discord</strong> as the front door.</p>
+<p>Land the key idea: <strong>Discord is the interface.</strong> No SSH, no terminal, no being at my desk. Phone on a bike ride works exactly as well as my laptop.</p>
+<p>Cost line matters to this room: it runs inside a <strong>Claude Max $100 plan</strong> &mdash; not the $200. Side projects use API keys with variable cost. This is a hobby-budget setup, not a lab.</p>
+<p><strong>Note for you:</strong> source said &lsquo;12 hours&rsquo; in the summary but &lsquo;~4 hours&rsquo; twice in the body. Using <strong>4 hours</strong> &mdash; correct me if wrong.</p>">
+  <div class="kicker">The setup at a glance</div>
+  <h2>Two agents, one brain,<br>reachable from my phone.</h2>
+  <div class="flow">
+    <div class="node"><b>Pi Pi</b><span>Raspberry Pi 5</span></div>
+    <div class="arrow">&harr;</div>
+    <div class="node"><b>Shared memory</b><span>GitHub, synced ~4h</span></div>
+    <div class="arrow">&harr;</div>
+    <div class="node"><b>Agent M1</b><span>Old laptop</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Discord</b><span>Phone / laptop / anywhere</span></div>
+  </div>
+  <p class="sub">Runs inside a Claude Max <b>$100</b> plan. Side projects add API costs.</p>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-notes="
+<p><span class='time'>3:30 - 5:30</span> &mdash; The one piece of plumbing they need to understand.</p>
+<p>Claude Channels wires a <strong>Claude Code session</strong> to a messaging channel. The plugin watches the messaging API for new messages, forwards them to the always-on session, the agent replies right in the chat.</p>
+<p>Say the unlock plainly: <strong>the agent lives somewhere that never turns off.</strong> That&rsquo;s the entire difference between &lsquo;a chatbot I open&rsquo; and &lsquo;an assistant that&rsquo;s just there.&rsquo;</p>
+<p>Optional context if the room is technical: I came from <strong>Openclaw</strong> &mdash; my first always-on agent that learned my preferences. Great idea, constant repair work. Channels is the version that stays up.</p>
+<p>Don&rsquo;t go deeper here. Setup details come at slide 8.</p>">
+  <div class="kicker">The mechanism</div>
+  <h2>Claude Channels puts the agent<br>where you already are.</h2>
+  <div class="flow">
+    <div class="node"><b>You</b><span>DM or channel post</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Plugin</b><span>watches for messages</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Always-on session</b><span>Claude Code in tmux</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Reply</b><span>in the same chat</span></div>
+  </div>
+  <p class="sub">No SSH. No sitting at the machine. The agent doesn&rsquo;t stop existing when you close your laptop.</p>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-notes="
+<p><span class='time'>5:30 - 8:00</span> &mdash; <strong>This is the emotional center of the talk.</strong> Slow down. If they remember one slide, make it this one.</p>
+<p>Tell the real story: best ideas arrive <strong>biking or walking the dog</strong>. Voice-to-text into Discord, messy and half-formed. You do <strong>not</strong> need to be precise &mdash; with Opus or Sonnet underneath, the agent parses what you meant.</p>
+<p>Then the crucial bit: <strong>the agent doesn&rsquo;t start building.</strong> It researches, writes a markdown plan into a plans folder, commits it to git. I pick it up on my laptop later and execute when ready.</p>
+<p>Contrast with the before-times: emailing myself, scribbled paper, Notion graveyard. All forgotten.</p>
+<p>The outcome line, say it clearly: <strong>&lsquo;More of my dumb ideas now become real plans I can actually judge &mdash; take on, delegate, or throw away.&rsquo;</strong> Capture wasn&rsquo;t the problem. Turning capture into something decidable was.</p>
+<p>PM translation: this is the gap between a backlog and a spec.</p>">
+  <div class="kicker">The killer workflow</div>
+  <h2>Capture wasn&rsquo;t my problem.<br>Turning capture into a plan was.</h2>
+  <div class="flow">
+    <div class="node"><b>Voice memo</b><span>mid-bike, messy</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Agent researches</b><span>while I keep riding</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>Markdown plan</b><span>committed to git</span></div>
+    <div class="arrow">&rarr;</div>
+    <div class="node"><b>I decide</b><span>build, delegate, or kill</span></div>
+  </div>
+  <p class="sub">It writes the plan. It doesn&rsquo;t start building. That restraint is the whole point.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-notes="
+<p><span class='time'>8:00 - 9:30</span> &mdash; Quick slide. Don&rsquo;t read all eight channels aloud; point and pick two or three.</p>
+<p>The org principle: <strong>a Discord channel per job.</strong> Started with just #general and questions. Added channels one at a time, mostly per-project.</p>
+<p><strong>Say the advice out loud:</strong> start small, add channels only as needed. Watching someone architect twelve channels on day one is how this fails.</p>
+<p>Good ones to call out: <strong>#daily-briefing</strong> (weather + articles from authors I follow, every morning), <strong>#inbox-alerts</strong> (emails flagged against criteria we agreed on), <strong>#glutenornot</strong> (uptime + Sentry errors from my iOS app).</p>
+<p>Frame it for PMs: <strong>the channel list is the org chart.</strong> Each one is a standing job with a clear output.</p>">
+  <div class="kicker">Organizing the work</div>
+  <h2>One channel per job.</h2>
+  <div class="chips">
+    <div class="chip"><b>#questions</b> random asks</div>
+    <div class="chip"><b>#reminders</b> scheduled nudges</div>
+    <div class="chip"><b>#daily-briefing</b> weather + authors I follow</div>
+    <div class="chip"><b>#signals</b> twitter-watcher output</div>
+    <div class="chip"><b>#inbox-alerts</b> flagged email</div>
+    <div class="chip"><b>#to-do</b> assign agent tasks</div>
+    <div class="chip"><b>#fitness</b> Strava race analysis</div>
+    <div class="chip"><b>#glutenornot</b> uptime + Sentry</div>
+  </div>
+  <p class="sub">Started with one channel. Added them one at a time, per project. <b>Start small.</b></p>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-notes="
+<p><span class='time'>9:30 - 12:00</span> &mdash; The &lsquo;why should I care&rsquo; slide. Lead with the story, not the concept.</p>
+<p><strong>Rosal&iacute;a story:</strong> I had tickets to a show at MSG. It got rescheduled. The inbox-watcher agent caught the email, recognized it needed action, and flagged it in #inbox-alerts. <strong>I never had to be at inbox zero.</strong> Let that land &mdash; it&rsquo;s the most relatable moment in the talk.</p>
+<p>Mechanism: a couple of Gmail inboxes forward to the agent, which reviews, catalogs, and prioritizes. I used to check email <strong>incessantly and absentmindedly</strong>. Much less now.</p>
+<p><strong>twitter-watcher:</strong> the goal was the information from Twitter <em>without spending time on Twitter</em>. It checks topics and accounts, judges if the discussion is worth reading, posts a short summary each weekday into #signals.</p>
+<p>Then the compounding move: because my personal agent sits <em>in the same channel</em>, I asked Pi Pi to go pull more on <strong>Claude Tag</strong> after seeing it in #signals &mdash; without ever logging into Twitter. Watcher agents feed the channel; the personal agent works the channel.</p>">
+  <div class="kicker">The behavior change</div>
+  <h2>The information comes to me.<br>I stopped going to get it.</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="n">&#9993;</div>
+      <div class="l"><b>inbox-watcher</b> caught that my Rosal&iacute;a show at MSG was rescheduled &mdash; and flagged it. No inbox-zero chasing.</div>
+    </div>
+    <div class="card">
+      <div class="n">&#9737;</div>
+      <div class="l"><b>twitter-watcher</b> reads Twitter so I don&rsquo;t. One short summary each weekday into #signals.</div>
+    </div>
+    <div class="card">
+      <div class="n">&#8635;</div>
+      <div class="l">Then I task <b>Pi Pi</b> in that same channel to go deeper &mdash; without ever logging in.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-notes="
+<p><span class='time'>12:00 - 13:30</span> &mdash; The &lsquo;it scales&rsquo; slide.</p>
+<p>Added <strong>Agent M1</strong> on an older laptop a few weeks ago. Why: more power for research tasks, much more on-device storage, and a path to experimenting with <strong>local LLMs</strong>. Be honest &mdash; the Pi is still going strong, I just wanted to tinker and had the machine.</p>
+<p><strong>Different trust levels, on purpose.</strong> M1 has read/write on my GlutenOrNot app plus MCP access to Sentry and PostHog, so it can investigate issues and submit PRs &mdash; with guardrails on what it can do autonomously. The Pi never got that much rope.</p>
+<p>Fun one: <strong>Agent M1 reviewed a PR that Pi Pi opened</strong> to debug API failures on the app. Agents reviewing each other&rsquo;s work.</p>
+<p>Best moment to date: away from my computer, M1 debugged why GlutenOrNot wasn&rsquo;t showing in the EU (I hadn&rsquo;t signed the right forms) while Pi Pi worked finance questions &mdash; <strong>both at once, all from my phone.</strong></p>
+<p>Shared memory in GitHub, ~4h sync: <strong>if one learns something, the other picks it up.</strong> One brain-ish.</p>">
+  <div class="kicker">Going from one to two</div>
+  <h2>A second agent &mdash; with a<br>different level of trust.</h2>
+  <div class="cols">
+    <div>
+      <h3>Pi Pi &middot; Raspberry Pi 5</h3>
+      <ul>
+        <li>Everyday assistant, always on</li>
+        <li>Reads across my GitHub repos</li>
+        <li><span>Deliberately narrow tool access</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Agent M1 &middot; Old laptop</h3>
+      <ul>
+        <li>More power, more storage, local-LLM path</li>
+        <li>Read/write on my app &middot; Sentry &middot; PostHog</li>
+        <li><span>Can investigate and submit PRs, with guardrails</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="sub">One recent session: M1 debugged why my app wasn&rsquo;t live in the EU while Pi Pi worked finance questions. <b>Both from my phone.</b></p>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-notes="
+<p><span class='time'>13:30 - 15:30</span> &mdash; The practical slide. Some of them will actually try this, so be concrete.</p>
+<p><strong>Any always-on machine works.</strong> A Pi is cheap and low-power; an old laptop is free. A machine that sleeps defeats the entire purpose &mdash; the agent disappears with it.</p>
+<p><strong>Learn from my mistake:</strong> I tried systemd as a service with auto-restart and start-on-boot. It broke multiple times in the first few hours. Switched to <strong>tmux wrapped in a <code>while true</code> loop</strong> &mdash; if it crashes or I /exit, it respawns itself. Hasn&rsquo;t fought me since. (I&rsquo;d only heard of tmux from Steve Yegge&rsquo;s Gas Town writeup.) <strong>Just go with tmux.</strong></p>
+<p><strong>Enable lingering</strong> &mdash; <code>loginctl enable-linger</code> &mdash; or your tmux session dies the moment you disconnect SSH. This one is non-obvious and cost me time.</p>
+<p><strong>Tailscale is badass.</strong> A &lsquo;secure conference room&rsquo; that isn&rsquo;t on the public internet. Makes SSH into the Pi trivial.</p>
+<p>Then just add tools, skills, and MCPs the normal way &mdash; SSH in, open the tmux session, use Claude Code as usual.</p>">
+  <div class="kicker">How to actually set it up</div>
+  <h2>Four things that took me<br>longer than they should have.</h2>
+  <ul>
+    <li><b>Any always-on box.</b> <span>Pi 5 is cheap and low-power. An old laptop is free.</span></li>
+    <li><b>Use tmux, not systemd.</b> <span>A <code>while true</code> loop respawns the agent on any crash or /exit. Systemd broke on me within hours.</span></li>
+    <li><b>Enable user lingering.</b> <span><code>loginctl enable-linger &lt;user&gt;</code> &mdash; or the session dies when SSH disconnects.</span></li>
+    <li><b>Tailscale for access.</b> <span>A private network that isn&rsquo;t on the public internet.</span></li>
+  </ul>
+  <pre>claude --channels plugin:discord@claude-plugins-official</pre>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-notes="
+<p><span class='time'>15:30 - 17:00</span> &mdash; First of two lessons slides. This one is counterintuitive, so give it room.</p>
+<p>The instinct is &lsquo;give the agent everything I know.&rsquo; That&rsquo;s wrong. <strong>Everything in memory loads into context every single session.</strong> Let it grow unchecked and the agent misses the important stuff in the noise.</p>
+<p>My rule: <strong>only critical rules and facts about active projects load every session.</strong> Everything else is callable on demand or archived so it can&rsquo;t cause confusion.</p>
+<p>Say it as a line they&rsquo;ll repeat: <strong>&lsquo;Less is more. A bigger memory is not a smarter agent.&rsquo;</strong></p>
+<p>Two agents now sync memory to GitHub every ~4 hours, so they share one brain &mdash; ish. Say &lsquo;ish&rsquo; out loud, it&rsquo;s honest.</p>
+<p>PM translation if you want it: this is the same discipline as a PRD nobody reads because it&rsquo;s 40 pages.</p>">
+  <div class="kicker">Learning #1</div>
+  <div class="quote">&ldquo;Give your agent a real memory &mdash;<br>not just a session.<br><br>But a bigger memory is not<br>a smarter agent.&rdquo;</div>
+  <p class="sub">Everything in memory loads into context <b>every session</b>. Only critical rules and active-project facts load by default. Everything else: call on demand, or archive it.</p>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-notes="
+<p><span class='time'>17:00 - 18:30</span> &mdash; The slide the room will have questions about. Be direct, don&rsquo;t hand-wave.</p>
+<p>Core principle: <strong>my Channel agents have far less tool access than my desktop Claude Code sessions.</strong> Every tool, skill, MCP, and allow-list permission widens the <strong>blast radius</strong> of a failure.</p>
+<p>The real risk: <strong>these agents read untrusted input</strong> &mdash; random forwarded emails, Sentry errors. So they must not act on instructions embedded in that content, and must never approve new access requests unless it comes directly from me.</p>
+<p>Practical advice: <strong>after the first week or two, audit everything</strong> with your agent &mdash; every allow-list permission, every Discord channel it can see.</p>
+<p>The honest tradeoff: as I minimized blast radius, I <em>granted more</em> permissions &mdash; otherwise it DM&rsquo;d me constantly for things I was fine with, like reading a repo. Security here is a dial, not a switch.</p>
+<p>Also: hardware keys on your important accounts.</p>">
+  <div class="kicker">Learning #2</div>
+  <h2>Every tool you add widens<br>the blast radius.</h2>
+  <ul>
+    <li><b>Channel agents get less access than my desktop sessions.</b> <span>Deliberately.</span></li>
+    <li><b>They read untrusted input</b> <span>&mdash; random emails, Sentry errors. They must never act on instructions buried in that content, or approve access requests that didn&rsquo;t come from me.</span></li>
+    <li><b>Audit after week two.</b> <span>Every allow-list permission, every channel it can see.</span></li>
+    <li><b>Then loosen deliberately.</b> <span>Once blast radius was small, I granted more &mdash; otherwise it DM&rsquo;d me to ask permission to read a repo.</span></li>
+  </ul>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-notes="
+<p><span class='time'>18:30 - 20:00</span> &mdash; Close. Expectations first so nobody walks out oversold, then the ask.</p>
+<p><strong>Be honest about upkeep.</strong> This is not Openclaw &mdash; I&rsquo;m not constantly repairing it. But it&rsquo;s not zero either. Expect a check-in every few weeks. In <strong>3 months: 2 restarts on the Pi</strong>, and I clear the 1M-token context roughly <strong>once a week</strong> (SSH in, /clear, done). If it goes quiet on Discord, it&rsquo;s usually a silent failure or dropped auth &mdash; restart the session.</p>
+<p>Cost, again, because they&rsquo;ll ask: <strong>Claude Max $100 covers the Channels setup.</strong> Layered projects use API keys, variable.</p>
+<p>What&rsquo;s next: <strong>OpenRouter</strong> so the agents stay online if Claude goes down, and <strong>local models</strong> for private things like financials and email.</p>
+<p><strong>The ask &mdash; end on this:</strong> &lsquo;Personal agents are here to stay. This is a better way to use the internet and I don&rsquo;t want to go back. Grab an old laptop this weekend and start with one channel. If you try it, come compare notes &mdash; I genuinely want to hear what you delegate.&rsquo;</p>
+<p>Then open for Q&amp;A with whatever time is left.</p>">
+  <div class="kicker">What&rsquo;s next</div>
+  <h2>Grab an old laptop.<br>Start with one channel.</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="n">2</div>
+      <div class="l">restarts needed in <b>3 months</b>. Plus a weekly <code>/clear</code> of the context window.</div>
+    </div>
+    <div class="card">
+      <div class="n">$100</div>
+      <div class="l">Claude Max plan covers it. <b>Not</b> the $200 tier. Side projects add API cost.</div>
+    </div>
+    <div class="card">
+      <div class="n">&rarr;</div>
+      <div class="l">Next: <b>OpenRouter</b> so agents survive an outage, and <b>local models</b> for private data.</div>
+    </div>
+  </div>
+  <p class="sub">It&rsquo;s not zero maintenance &mdash; but it&rsquo;s a better way to use the internet, and I&rsquo;m not going back. <b>Come compare notes.</b></p>
+</section>
+
+</div>
+
+<div id="notes"><h4>Speaker Notes</h4><div class="body"></div></div>
+<div id="hint"><b>&larr; &rarr;</b> navigate &nbsp;&middot;&nbsp; <b>S</b> speaker notes &nbsp;&middot;&nbsp; <b>F</b> fullscreen</div>
+<div id="num"></div>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var notes = document.getElementById('notes');
+  var notesBody = notes.querySelector('.body');
+  var bar = document.getElementById('bar');
+  var num = document.getElementById('num');
+  var i = 0, showNotes = false;
+
+  function render(){
+    slides.forEach(function(s,n){ s.classList.toggle('on', n===i); });
+    notesBody.innerHTML = slides[i].getAttribute('data-notes') || '<p>&mdash;</p>';
+    bar.style.width = ((i+1)/slides.length*100) + '%';
+    num.textContent = (i+1) + ' / ' + slides.length;
+    try{ location.hash = i+1; }catch(e){}
+  }
+  function go(n){ i = Math.max(0, Math.min(slides.length-1, n)); render(); }
+
+  document.addEventListener('keydown', function(e){
+    var k = e.key;
+    if(k==='ArrowRight'||k==='ArrowDown'||k===' '||k==='PageDown'){ e.preventDefault(); go(i+1); }
+    else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'){ e.preventDefault(); go(i-1); }
+    else if(k==='Home'){ e.preventDefault(); go(0); }
+    else if(k==='End'){ e.preventDefault(); go(slides.length-1); }
+    else if(k==='s'||k==='S'||k==='n'||k==='N'){
+      showNotes = !showNotes;
+      notes.classList.toggle('on', showNotes);
+      document.body.classList.toggle('notes-on', showNotes);
+    }
+    else if(k==='f'||k==='F'){
+      if(!document.fullscreenElement){ document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    }
+  });
+
+  // click/tap to advance (right half forward, left half back)
+  document.getElementById('stage').addEventListener('click', function(e){
+    go(e.clientX > window.innerWidth/2 ? i+1 : i-1);
+  });
+
+  var start = parseInt((location.hash||'').replace('#',''),10);
+  go(isNaN(start) ? 0 : start-1);
+})();
+</script>
+</body>
+</html>

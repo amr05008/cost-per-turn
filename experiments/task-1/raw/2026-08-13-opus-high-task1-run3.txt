@@ -1,0 +1,156 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll start with the debug skill since it covers the PostHog setup for this
+  project, then pull the data.
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+  Searched for 1 pattern, read 1 file, called plugin:posthog:posthog 22 times (ctrl+o to expand)
+
+⏺ Bash(sed -n '600,700p' api/barcode.js)
+  ⎿    }
+
+       if (product.labels_tags && product.labels_tags.length > 0) {
+     … +98 lines (ctrl+o to expand)
+
+  Called plugin:posthog:posthog 3 times (ctrl+o to expand)
+
+⏺ Pulled 30 days (2026-07-14 → 2026-08-13) from PostHog project 457245: 429 
+  successful scans, 64 failures, 488 of 493 events from iOS.
+
+  First, the boring good news: the backend is clean. One claude_error in 30
+  days, zero server_error, zero rate_limited. Nothing to fix on the API side —
+  all three findings below are capture and product-logic problems.
+
+  ---
+  Top 3 insights
+
+  1. The photo/OCR path is a trap door — and the barcode path funnels users 
+  straight into it
+
+  ┌─────────────┬──────────┬───────────────┬───────┐
+  │    Path     │ Attempts │   Failures    │ Rate  │
+  ├─────────────┼──────────┼───────────────┼───────┤
+  │ Barcode     │ 305      │ 26 not_found  │ 8.5%  │
+  ├─────────────┼──────────┼───────────────┼───────┤
+  │ OCR (photo) │ 185      │ 35 ocr_failed │ 18.9% │
+  └─────────────┴──────────┴───────────────┴───────┘
+
+  Rates alone understate it. What happens after a failure is the real story:
+
+  ┌─────────────────┬───────────────────┬─────────────────┬────────────────┐
+  │   Next event    │ Recovered with a  │   Retried &     │ Never scanned  │
+  │     after…      │      success      │  failed again   │     again      │
+  ├─────────────────┼───────────────────┼─────────────────┼────────────────┤
+  │ not_found       │ 19 / 26 (73%)     │ 1               │ 4              │
+  │ (barcode)       │                   │                 │                │
+  ├─────────────────┼───────────────────┼─────────────────┼────────────────┤
+  │ ocr_failed      │ 6 / 35 (17%)      │ 20              │ 7              │
+  │ (photo)         │                   │                 │                │
+  └─────────────────┴───────────────────┴─────────────────┴────────────────┘
+
+  A barcode miss is a soft failure — 17 of 26 users immediately photograph the
+  label instead, and it works. An OCR failure is a wall: users retry into the
+  same failure or leave. Five distinct identities logged 3–6 OCR failures with 
+  zero successes ever — they installed, tried, never got a single working
+  result.
+
+  The cause is visible in the capture metrics: failed OCR images have a median
+  of 186 KB vs 403 KB for successes (p10 = 36 KB), and median ocr_chars on 
+  failures is 0 — Vision returns no text at all, not partial text. That's not
+  "hard label," it's a photo that doesn't contain a readable label: too far, too
+  dark, out of frame. This confirms the early read in your ocr-capture-assist
+  plan notes — framing, not blur.
+
+  2. 71% of all successful scans return "caution" — the verdict scale is 
+  carrying very little information
+
+  305 of 429 successes are caution. Breaking down the 279 barcode successes:
+
+  - 102 (37%) — Open Food Facts, has ingredients, caution / medium → "no gluten
+  listed, but not certified"
+  - 62 (22%) — had_ingredient_data: false, caution / low → the app found the
+  product but has no ingredients at all and returns a shrug
+  - 52 safe / high, 22 unsafe / high — the genuinely informative answers, 27% of
+  the total
+
+  Add the 26 not_found failures and 88 of 331 barcode attempts (27%) end in "we 
+  don't actually know." Conservatism is the right policy for celiac safety and
+  I'm not suggesting you loosen it — but a user who sees amber 7 times out of 10
+  stops reading the color.
+
+  Worse, the no-data nudge isn't landing. The code prompts "scan the label" on
+  the no-ingredient-data path, but only 15 of 62 (24%) follow up with a photo;
+  29 scan a different barcode, 11 stop. Compare the not_found path's 65% photo
+  follow-through — same intent, a third of the conversion.
+
+  3. 1.4.1 appears to have helped, but you can't prove it — and volume is 
+  genuinely up
+
+  ┌────────────────────────────┬──────────────────┬────────────────────────┐
+  │           Period           │ OCR failure rate │ Barcode not_found rate │
+  ├────────────────────────────┼──────────────────┼────────────────────────┤
+  │ Pre-1.4.1 (Jul 14–27)      │ 22.5% (23/102)   │ 12.1% (17/140)         │
+  ├────────────────────────────┼──────────────────┼────────────────────────┤
+  │ Post-1.4.1 (Jul 28–Aug 13) │ 14.5% (12/83)    │ 5.5% (9/165)           │
+  └────────────────────────────┴──────────────────┴────────────────────────┘
+
+  Weekly scans roughly doubled: ~34–43/wk in late June → 90–104/wk through July,
+  tapering to 46 in the partial current week. Real growth, concentrated in
+  GB/NIR and US NY/IL/GA, with a long international tail (AU, CA, AM).
+
+  Two caveats that undercut the comparison, and they matter:
+
+  - distinct_id is a SHA-256 of the client IP. The 96 "people" in 30 days is
+  mostly IP churn — 80 of them have exactly one active day. Retention,
+  activation, and "did the fix help the same user" are all uncomputable with
+  today's instrumentation.
+  - scan_failed only started firing 2026-07-07. June's "zero failures" is
+  missing instrumentation, not health. Any pre-July comparison is invalid.
+
+  Also worth noting: the web PWA is effectively dead (5 of 493 events), menu
+  mode is 9 scans, and non-English detection fired 3 times. The multilingual and
+  menu work isn't being exercised at measurable volume.
+
+  ---
+  3 action items to prioritize
+
+  1. Give yourself a stable install ID and instrument the capture attempt.
+  Everything above rests on IP-hash sand. Two changes: (a) a privacy-safe
+  per-install anonymous ID replacing/augmenting the IP hash — no scan content,
+  so the policy promise holds; (b) a client-side capture/attempt event so you
+  see attempts that die before the server. Note the timeout beacon documented in
+  api/ANALYTICS.md has never once fired in 30 days while network fired twice —
+  either the timeout path doesn't beacon or it's genuinely never hit, and you
+  can't currently tell which. This unblocks the other two items, so do it first.
+
+  2. Investigate the zero-text OCR failures with a pre-upload check. The 36 KB /
+  0-chars signature says the shot doesn't contain the label — which means you
+  can catch it on-device before spending an API round-trip and a user's
+  patience. Worth testing: a fast on-device text-presence or edge-density check,
+  plus a retry screen that names what to change ("move closer," "more light")
+  instead of the generic failure that currently produces a 20-in-35 retry loop.
+  Target metric: retry-and-fail-again rate, currently 57% of OCR failures.
+
+  3. Split "caution" into states the user can act on. One amber currently covers
+  three different situations: no data on this product (62 scans), ingredients
+  look clean but uncertified (~102), and actual cross-contamination risk. Don't
+  change the verdict policy — change the presentation, and fix the weakest
+  handoff: the no-ingredient-data path converts to a photo at 24% vs 65% for
+  not_found, which suggests the nudge is buried or reads like a verdict rather
+  than a prompt. That gap is the cheapest win in this dataset.
+
+  Happy to build a dashboard for the OCR funnel + verdict mix so these stay
+  visible week to week — say the word.
+
+✻ Cooked for 4m 6s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data; I delivered three insights (OCR failure trap door, 71% caution verdicts, unprovable 1.4.1 gains) and three action items. Next: build the OCR funnel and verdict-mix dashboard if you want it. (disable recaps in /config)

@@ -20,9 +20,15 @@ leaves your machine.
 | `analyze-history.py` | Prices your entire Claude Code transcript history against a date-stamped price sheet — cost per turn, cache hit rate, spend by repo |
 | `prices.json` | The date-stamped model price sheet `analyze-history.py` bills against |
 | `tests/` | A synthetic fixture so you can run the analyzer with zero session history of your own |
+| `experiments/` | The experiments themselves — fixtures, prompts, answer keys, raw outputs, results |
+| `protocols/` | How each experiment is run, in enough detail to repeat it |
+| `scripts/` | Extractors and graders that turn raw run logs into comparable numbers |
 
 More experiments land here as they run. The status line is the front door;
-the history analyzer is the record.
+the history analyzer is the record; `experiments/` is the evidence.
+
+Start with [`experiments/README.md`](experiments/README.md) for what's been run and
+what each task is actually testing.
 
 ## Start here: put a cost meter in your terminal
 

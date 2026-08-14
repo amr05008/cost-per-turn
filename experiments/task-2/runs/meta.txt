@@ -1,0 +1,5 @@
+date:         2026-08-13T23:20:32Z
+claude:       2.1.231 (Claude Code)
+pi:           0.84.1
+reps_per_arm: 5
+source_sha:   8239eefdb6ba5119

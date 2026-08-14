@@ -1,0 +1,192 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ /model                                                                        
+  ⎿  Set model to Opus 5 (1M context) and saved as your default for new sessions
+
+❯ /effort                                                                       
+  ⎿  Set effort level to high (saved as your default for new sessions):
+     Comprehensive implementation with extensive testing and documentation
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll start by pulling the PostHog data for the last 30 days.
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+⏺ Skill(posthog:querying-posthog-data)
+  ⎿  Successfully loaded skill
+
+  Searched for 1 pattern, read 1 file, called plugin:posthog:posthog 16 times (ctrl+o to expand)
+
+⏺ Bash(sed -n '70,100p' api/_analytics.js; echo "--- WEB X-CLIENT ---"; grep -rn
+      "X-Client\|x-client" web/js/ mobile/ --include=*.js --include=*.ts
+      --include=*.tsx | g…)
+  ⎿    if (city != null) props.$geoip_city_name = city;
+       return props;
+     }
+     … +30 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, called plugin:posthog:posthog 5 times (ctrl+o to expand)
+
+⏺ Bash(sed -n '210,240p' mobile/app/index.tsx)
+  ⎿    const processAndAnalyze = async (imageUri: string, source: 'camera'
+     | 'picker') => {
+         setOcrError(null);
+     … +27 lines (ctrl+o to expand)
+
+  Recalled 1 memory (ctrl+o to expand)
+
+⏺ The prior read on this (Jul 20–26) excluded tester/reviewer traffic. Let me
+  redo the size analysis the same way so I'm comparing like with like.
+
+  Called plugin:posthog:posthog 2 times (ctrl+o to expand)
+⏺ Data's in. One important catch: my first read of the OCR numbers was an
+  artifact — stripping reviewer and tester traffic reverses the conclusion, so
+  I've used the filtered numbers below.
+
+  Window: 2026-07-14 → 08-13 · 429 successful scans, 64 failures, 97 IP-hash IDs
+
+  (distinct_id = SHA-256 of client IP, so "IDs" ≈ networks, not people. One ID 
+  has 84 events. iOS is 99% of volume — web is 3 scans total.)
+
+  ---
+  Insight 1 — The backend is spotless. The ceiling is data coverage.
+
+  In 30 days: 1 claude_error, 0 server_error, 0 rate_limited, 0 timeout beacons,
+  2 network beacons. Nothing to fix there.
+
+  But look at what users actually get back from the barcode path (65% of all
+  volume, 279 successes):
+
+  ┌─────────┬─────┬───────┐
+  │ verdict │  n  │ share │
+  ├─────────┼─────┼───────┤
+  │ caution │ 205 │ 73%   │
+  ├─────────┼─────┼───────┤
+  │ safe    │ 52  │ 19%   │
+  ├─────────┼─────┼───────┤
+  │ unsafe  │ 22  │ 8%    │
+  └─────────┴─────┴───────┘
+
+  And the mechanism behind the caution pile — had_ingredient_data splits it
+  cleanly:
+
+  - 62 scans (22%) returned had_ingredient_data: false → every single one became
+  low-confidence caution. The product was found, but the record carried no
+  ingredient list. There is nothing to analyze, so the app shrugs.
+  - Add 26 not_found, and 88 of 307 barcode attempts (29%) end with the app 
+  unable to give a real answer.
+
+  Source concentration is total: Open Food Facts 260, UPCitemdb 15, USDA 4,
+  Nutritionix 0. The waterfall's tail is doing almost nothing.
+
+  Insight 2 — The gated image_kb question is answered: framing, not blur
+
+  Your plans/ocr-capture-assist-2026-07-18.md Phase 4 read is now runnable, and
+  it holds — but only if you strip reviewer/tester traffic, which is the whole 
+  trap here.
+
+  All traffic looks like a screaming size correlation (<100 KB → 79% failure).
+  Excluding Cupertino and Brooklyn:
+
+  ┌──────────┬─────┬────────┐
+  │ image_kb │ ok  │ failed │
+  ├──────────┼─────┼────────┤
+  │ <200     │ 7   │ 2      │
+  ├──────────┼─────┼────────┤
+  │ 200–400  │ 51  │ 8      │
+  ├──────────┼─────┼────────┤
+  │ 400+     │ 68  │ 1      │
+  └──────────┴─────┴────────┘
+
+  Real-user failures sit at a median 331 KB — squarely inside the healthy
+  success band (real-user success median ~400 KB). Only 2 of 11 fall under 200
+  KB. Meanwhile all 35 ocr_failed events returned ocr_chars: 0 — Vision found no
+  text at all, not partial text.
+
+  That's an aiming problem, not an optics problem. Since manipulateAsync fixes
+  width at 1024 and quality at 0.7 (mobile/app/index.tsx:220), byte size is a
+  detail proxy — and it says these images were fine. Framing guidance, skip blur
+  detection, confirming the Jul 20–26 early read on a full month. Real-user OCR
+  failure rate is now ~8%, improved from the ~16% you measured then.
+
+  Insight 3 — Apple's reviewer has never had a working scan. Three submissions 
+  running.
+
+  Cupertino, 3 distinct IDs, 3 short bursts — 14 attempts, 0 successes:
+
+  ┌──────────────────────┬──────────┬───────────┬───────────────────────────┐
+  │    session (UTC)     │ attempts │ image_kb  │          result           │
+  ├──────────────────────┼──────────┼───────────┼───────────────────────────┤
+  │ 2026-07-20           │ 5        │ 39–125    │ all ocr_failed,           │
+  │ 01:25–01:28          │          │           │ ocr_chars: 0              │
+  ├──────────────────────┼──────────┼───────────┼───────────────────────────┤
+  │ 2026-07-28           │ 6        │ 59–111    │ all ocr_failed,           │
+  │ 01:46–01:49          │          │           │ ocr_chars: 0              │
+  ├──────────────────────┼──────────┼───────────┼───────────────────────────┤
+  │ 2026-08-03           │ 3        │ 36, 36,   │ all ocr_failed,           │
+  │ 02:20–02:21          │          │ 36        │ ocr_chars: 0              │
+  └──────────────────────┴──────────┴───────────┴───────────────────────────┘
+
+  The 07-28 burst lines up with 1.4.1's review. Three identical 36 KB images
+  strongly suggest the iOS Simulator's photo picker (stock images, no camera)
+  rather than a real capture. Each reviewer gave up after 3–6 tries.
+
+  This isn't only a review risk — it's the cold-start path. Of the 15 IDs whose
+  first event was a failure, only 47% ever got a successful scan (avg 3.9
+  events). Of the 82 who started clean: 100%, avg 5.3 events.
+
+  ---
+  Three things to prioritize
+
+  1. Cut 1.4.2 with framing guidance — the data gate is cleared, and it says 
+  skip blur detection.
+  Don't add a client-side size gate; the naive all-traffic read would have
+  talked you into one, and it would reject good captures while missing the real
+  failures. The signal to act on is ocr_chars: 0 with a healthy image — users
+  are photographing the wrong thing, or too far out. A reticle-aligned "fill the
+  frame with the ingredients list" prompt on the retry screen is the fix. Ship
+  it with the auto-retry-with-backoff already queued.
+
+  2. Reproduce the App Review environment before 1.4.2 goes in. Run the OCR path
+  in the Simulator against the stock photo library and confirm what happens. If
+  picker-sourced stock images structurally can't OCR, ship a demo/sample-label
+  affordance so a reviewer can see a green verdict on their first try.
+  Highest-leverage item on the list: it's a live rejection risk on the next
+  submission and it's the same first-run cliff costing you half of new users who
+  start with a failure.
+
+  3. Stop dead-ending the "found, but no ingredients" barcode case. 22% of
+  successful barcode scans hit it, and the user gets an unexplained
+  low-confidence caution. Instead: name the situation and hand off to the camera
+  — "Found the product, but no ingredient list on file. Photograph the label?"
+  That converts your single largest bucket of unhelpful answers into the OCR
+  path, which succeeds ~92% of the time for real users. Worth splitting
+  had_ingredient_data: false out in analytics so you can measure the conversion.
+
+  ---
+  Two secondary notes: the UK is ~1/3 of volume (~153 events, 25 IDs — [TOWN-GB]
+  alone is 87) and is undesigned-for. And menu mode is 9 scans across 5 IDs in 
+  30 days — near-zero return on the traveler-context/MenuResultCard build.
+
+  One caveat I can't resolve: zero timeout beacons could mean connectivity is
+  genuinely fine, or that the beacon dies on the same dead connection it's
+  reporting. Only 2 network events ever got through, so the beacon demonstrably
+  fires — but you can't distinguish "no timeouts" from "timeouts can't phone
+  home."
+
+  Want me to write this up as a shareable artifact, or open the barcode hand-off
+  as a plan file?
+
+✻ Cooked for 5m 25s
+
+※ recap: Analyzed 30 days of GlutenOrNot PostHog data and delivered three insights plus three priorities. Next: your call on whether I write it up as a shareable artifact or open the barcode ingredient hand-off as a plan file. (disable recaps in /config)
+
+❯ /rename 
+  ⎿  Session renamed to: barcode-ocr-fallback-analysis

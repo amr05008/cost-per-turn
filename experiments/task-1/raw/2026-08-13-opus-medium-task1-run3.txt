@@ -1,0 +1,99 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll pull the analytics contract and the PostHog query guidance first.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Skill(posthog:querying-posthog-data)
+  ⎿  Successfully loaded skill
+
+  Read 1 file (ctrl+o to expand)
+
+  Called plugin:posthog:posthog 4 times (ctrl+o to expand)
+
+⏺ Now running the analysis queries.
+
+  Called plugin:posthog:posthog 12 times (ctrl+o to expand)
+
+⏺ GlutenOrNot — 30 days (Jul 14 – Aug 13, 2026)
+
+  Baseline: 429 successful scans, 64 failures, ~97 unique users. iOS is 424 of
+  429 scans — web is effectively dead (3 scans, 3 users). US 52% / GB 36% /
+  CA+AU 11%.
+
+  Top 3 insights
+
+  1. It's a one-and-done app: 82% of users never come back for a second day.
+  80 of 97 users scanned on exactly one calendar day. Only 3 users account for
+  151 events (35% of all volume). Worse, the first-run experience predicts it:
+  of the 15 users whose very first scan failed, exactly 1 ever returned on
+  another day (7%) versus 16 of 82 who succeeded first (20%). First-scan failure
+  is roughly a 3× retention penalty on a tiny base — directionally strong, and
+  it's the same cohort as the OCR problem below.
+
+  2. Failed OCR scans are systematically low-detail images — this settles the 
+  pending 1.4.2 question.
+  Successful OCR scans have a median image_kb of 403 (p10 205); ocr_failed scans
+  median 179 kb, p10 36 kb. And ocr_chars is 0.0 on every single failure —
+  Google Vision returned literally nothing, not a partial read. That's not a
+  "blurry text" signature (blur yields garbled partial text at normal file
+  size); it's small/flat/low-texture frames — label too far away, badly cropped,
+  or shot in poor light. Your earlier read of framing guidance, not blur is
+  confirmed by the data. Encouragingly, ocr_failed fell 19 → 6 → 6 → 0 across
+  the last four weeks (the last week is partial), so 1.4.1 already helped.
+
+  3. A third of all verdicts are low-confidence "caution" — and 62 of them are 
+  structurally uninformative.
+  71% of scans return caution; 33% return low confidence. The barcode path
+  explains the biggest chunk: 62 of 279 barcode scans (22%) came back with 
+  had_ingredient_data: false, and 100% of those returned exactly caution/low —
+  the app found the product but had nothing to reason over. Add 25 not_found
+  failures and ~30% of barcode attempts end in "I can't tell you." Open Food
+  Facts serves 93% of successful lookups; UPCitemdb (15 scans) never carries
+  ingredients at all, so it only ever produces this dead-end.
+
+  3 things to prioritize investigating
+
+  1. Instrument the first session, then fix the OCR first-run.
+  You can see that first-scan failures kill retention but not why users leave —
+  there's no event between app open and scan. Add a lightweight capture-attempt
+  event (frame/distance state, retry count) so you can distinguish "user gave
+  up" from "user got a bad result." Ship framing guidance in 1.4.2 based on
+  insight #2 — a minimum-detail check that blocks submission and says "move 
+  closer to the label" before burning a Vision call, rather than after. Verify
+  by re-running the image_kb split post-release.
+
+  2. Decide what to do when the barcode path has no ingredients.
+  22% of barcode scans return a verdict the app can't actually justify. Two
+  options worth testing: (a) drop UPCitemdb from the waterfall entirely when it
+  can't return ingredients and treat it as not_found, or (b) when ingredients
+  are missing, explicitly hand off to the OCR path — "we found this product but 
+  not its ingredients; snap the label." Right now that handoff is silent, which
+  is likely a chunk of the one-and-done cohort. Also check whether the 25
+  not_found barcodes cluster on UK products (36% of your traffic is GB, and Open
+  Food Facts UK coverage is thinner than US).
+
+  3. Kill or commit on web — and on the multilingual investment.
+  Web produced 3 scans in 30 days against 424 on iOS; it's absorbing maintenance
+  and cache-busting overhead for no usage. Separately, detected_language is
+  non-null on 6 of 429 scans — the Spanish/Dutch/Catalan/French vocabulary and
+  Traveler Context prompt work is essentially untouched by real traffic. Before
+  extending either, work out whether that's genuinely no demand or an
+  acquisition problem (all traffic is US/GB/CA/AU English-speaking, so you may
+  simply have no distribution where those features matter).
+
+  Caveat: per api/ANALYTICS.md, a client timeout can emit both scan and
+  scan_failed for one attempt, so treat the ~13% failure rate as an upper bound.
+  At these volumes (97 users) all retention splits are directional, not
+  significant.
+
+✻ Sautéed for 1m 58s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data for insights and priorities; that analysis is delivered. Next action is yours: decide whether to act on the OCR framing fix for 1.4.2 or dig further into any finding. (disable recaps in /config)

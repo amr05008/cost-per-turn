@@ -1,0 +1,106 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll start by loading the PostHog debugging context for this project and
+  pulling the data.
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+  Read 1 file, called plugin:posthog:posthog 18 times (ctrl+o to expand)
+  ⎿  Error: No such tool available: mcp__plugin_socket
+
+  Called plugin:posthog:posthog (ctrl+o to expand)
+
+⏺ Analysis complete — 30 days (2026-07-14 → 2026-08-13), 429 successful scans,
+  64 failures, 97 distinct IDs, 4 countries.
+
+  Top 3 insights
+
+  1. OCR failure is a first-run killer, and it tracks image size almost 
+  perfectly.
+
+  36 of 186 photo scans failed (19%). Failure rate by encoded image size is a
+  clean gradient:
+
+  ┌──────────┬───────────┐
+  │ image_kb │ fail rate │
+  ├──────────┼───────────┤
+  │ <100 KB  │ 78.6%     │
+  ├──────────┼───────────┤
+  │ 100–200  │ 41.2%     │
+  ├──────────┼───────────┤
+  │ 200–350  │ 15.0%     │
+  ├──────────┼───────────┤
+  │ 350–550  │ 12.0%     │
+  ├──────────┼───────────┤
+  │ 550+     │ 7.4%      │
+  └──────────┴───────────┘
+
+  The human cost is concentrated: five distinct IDs logged 23 OCR failures and 
+  zero successes — ever. Each is a tight burst then silence (6 failures in 3
+  min, 5 in 2.5 min, 3 in 43s with three identical 36 KB payloads). They
+  downloaded the app, never got one working result, and left. Two payloads
+  reached the endpoint at literally 0 KB.
+
+  2. The app's most common answer is a non-answer, and it's a data-coverage 
+  problem, not a model problem.
+
+  71% of successful scans return caution; 33% return low confidence. On the
+  barcode path, 62 of 279 scans (22%) came back with had_ingredient_data=false —
+  and every single one was forced to caution/low. Add 26 not_found and ~29% of
+  barcode attempts end with no real gluten answer despite the pipeline
+  "succeeding." Open Food Facts carries 93% of hits; UPCitemdb (15 scans) never
+  returns ingredients, so it's a structurally 100% low-confidence source; USDA
+  fired 4 times; Nutritionix zero.
+
+  3. A third of your traffic is now UK — and the two features built for 
+  international users are unused.
+
+  GB = 168 events (34%), from 15 distinct IDs across 4 cities in a single week —
+  real adoption, not one traveler. AU 24, CA 27. Meanwhile menu mode is 9 scans
+  out of 429 (2%), and detected_language fired 6 times total (sv, fr, it, en).
+  The Spanish/Dutch/Catalan/French vocabulary work isn't being exercised; your
+  actual growth is English-speaking. Backend health, separately, is clean: 1
+  claude_error, 0 server_error, 0 rate_limited in 30 days.
+
+  Top 3 to prioritize
+
+  1. Find out why tiny images are being sent at all — then gate the OCR path 
+  client-side.
+  Before adding a user-facing "hold steadier" prompt, check whether mobile/
+  capture code is compressing/downscaling to those sizes itself. If the client
+  is manufacturing 36 KB and 0 KB payloads, this is a bug upstream of the user
+  and the fix is free. Either way, add a pre-flight size check that re-prompts
+  before the network call, and beacon a distinct scan_failed reason so it stops
+  hiding inside ocr_failed. Highest leverage of anything here — it targets the
+  zero-success cohort directly.
+
+  2. Quantify the had_ingredient_data=false bucket and give it an exit ramp.
+  Split those 62 scans: found in OFF with an empty ingredients field, vs. only
+  resolvable via UPCitemdb. That split decides the fix — if it's mostly OFF
+  gaps, the win is an in-app "no ingredient list for this product — photograph
+  the label instead" hand-off that converts a dead end into an OCR scan. Also
+  worth asking whether UPCitemdb earns its slot in the waterfall when it can
+  only ever produce caution/low.
+
+  3. Decide menu mode's fate before investing further.
+  2% usage against real build cost. Investigate whether it's discovery (users
+  don't know it exists — check where it sits in the UI) or demand (nobody wants
+  it). That answer, plus the UK/AU/CA signal, suggests your next international
+  investment is English-market polish, not more translation vocabulary.
+
+  Two caveats on all of the above: distinct_id is a SHA-256 of client IP, so
+  "users" is approximate in both directions (one person on cellular fragments
+  into several); and per api/ANALYTICS.md, a client timeout can log one attempt
+  as both scan and scan_failed, so treat failure rates as slightly optimistic.
+
+✻ Sautéed for 3m 5s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data; I delivered three insights (OCR failures killing first runs, barcode scans lacking ingredient data, UK growth with unused menu mode) and three priorities. Next: check mobile capture code for why tiny images are sent. (disable recaps in /config)

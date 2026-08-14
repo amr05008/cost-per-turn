@@ -1,0 +1,113 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll start by loading the analytics contract and the PostHog query skill.
+
+⏺ Skill(posthog:querying-posthog-data)
+  ⎿  Successfully loaded skill
+
+  Read 1 file (ctrl+o to expand)
+
+  Read 1 file, called plugin:posthog:posthog 3 times (ctrl+o to expand)
+
+⏺ Schema confirmed. Now running the analysis queries.
+
+  Called plugin:posthog:posthog 13 times, recalled 1 memory (ctrl+o to expand)
+
+⏺ The memory flags two known non-user profiles to exclude. Re-running the OCR
+  analysis clean.
+
+  Called plugin:posthog:posthog (ctrl+o to expand)
+
+⏺ Reviewer and internal traffic is contaminating the picture. Recomputing with
+  those excluded.
+
+  Called plugin:posthog:posthog 4 times, wrote 2 memories (ctrl+o to expand)
+
+⏺ Analyzed the last 30 days (Jul 14 – Aug 13) of scan / scan_failed. One
+  important preliminary: the raw numbers are contaminated. Four profiles — your
+  Brooklyn RC device and three Cupertino Apple-reviewer profiles (one per
+  submission: Jul 20, Jul 28, Aug 3) — produce 24 of the 64 failures and zero
+  successes. Everything below excludes them.
+
+  Clean baseline: 408 successful scans, 40 failures, 93 real users. Barcode 269
+  ok / 28 failed (9.4%). OCR 139 ok / 12 failed (7.9%).
+
+  Top 3 insights
+
+  1. The image_kb gate for 1.4.2 is resolved — it's framing, not blur.
+  This was the open decision in plans/ocr-capture-assist-2026-07-18.md Phase 4.
+  Image size does not separate real-user OCR failures from successes: failures
+  land across every size bucket (2/7 at 100–200 KB, 2/20 at 200–300, 6/69 at
+  300–500, 1/40 at 500+). No cliff. ocr_chars is 0 on every failure — OCR
+  returns nothing at all, which is an aiming problem, not a soft-focus problem.
+  Ship framing guidance in 1.4.2 and skip blur detection. Worth knowing: the
+  uncleaned data looks like a slam dunk for blur (<100 KB fails 79% of the time)
+  — that bucket is essentially pure reviewer traffic. It would have sent you
+  down the wrong path.
+
+  2. OCR is no longer your weak path; barcode not_found is.
+  OCR's real failure rate (7.9%) is now lower than barcode's (9.4%), and well
+  below the 16% early read and the 29% weekly-snapshot headline. The single
+  largest real failure mode is not_found — 26 events across 18 distinct users,
+  i.e. ~19% of your user base hit "we don't know this product" at least once.
+  Beyond that, 61 barcode scans (23% of all barcode scans) returned caution /
+  low confidence with had_ingredient_data=false — the product resolved but
+  carried no ingredients, so the user got a non-answer. Add the two together and
+  roughly a third of barcode scans end without a usable verdict. The
+  four-source waterfall is not covering real shelves.
+
+  3. Almost nobody comes back. 77 of 93 users (83%) scanned on exactly one
+  calendar day; only 3 users scanned on more than 3 days. Scan volume is
+  flat-to-healthy (~95/week) but it's carried by a handful of regulars — one
+  user alone accounts for 84 scans. This is the biggest number on the board and
+  it's currently uninvestigable: PostHog receives only scan and scan_failed, so
+  you cannot distinguish "installed and never opened again" from "opened,
+  hesitated, didn't scan."
+
+  3 action items to prioritize
+
+  1. Close the barcode coverage gap — highest user-visible impact.
+  Two sub-questions: for the 26 not_found cases, which source in the waterfall
+  is the last one to miss (Vercel runtime logs have this; PostHog deliberately
+  doesn't, per the privacy invariant)? And for the 61
+  resolved-but-no-ingredients cases, the right fix is probably product rather
+  than data — instead of returning low-confidence caution, route the user
+  straight into "we found this product but not its ingredients — snap the label"
+  and hand them to the OCR path, which now works well. That converts your most
+  common non-answer into a real verdict.
+
+  2. Instrument the funnel before the scan. You're flying blind on the 83%
+  single-day figure. Add app-open / camera-opened events (the Expo autocapture
+  events Application opened and $screen are already recognized by the project,
+  just not being sent) so you can tell abandonment-before-scan from
+  churn-after-scan. Without this, any retention work in 1.4.3 is guesswork.
+  Check privacy-claims-check before adding — new events mean re-verifying the
+  analytics enumeration against the policy.
+
+  3. Fix the reviewer-contamination problem structurally. Every release adds a
+  Cupertino profile that inflates your failure rate by ~40% and skews exactly
+  the OCR capture metrics you're using to make release decisions. It nearly
+  produced the wrong 1.4.2 call. Create a PostHog cohort or an internal-traffic
+  filter that excludes them, and make the weekly snapshot use it — otherwise
+  reports/weekly-snapshot/ keeps reporting a failure rate roughly double the
+  real one.
+
+  I've updated the ios-release-pending-connectivity-fix memory: the 1.4.2 gate
+  is now marked decided, and the four excluded person_ids are recorded so future
+  analyses start clean.
+
+  Two caveats on all of this: absolute numbers are small (40 failures total), so
+  treat percentages as directional; and per api/ANALYTICS.md, client timeouts
+  can double-count one attempt as both scan and scan_failed, so the true failure
+  rate is marginally lower than stated.
+
+✻ Sautéed for 3m 21s
+
+※ recap: Analyzed 30 days of GlutenOrNot PostHog data and delivered three insights plus three priorities; the 1.4.2 blur-vs-framing gate resolved to framing guidance. Next: your call on which action item to pursue first. (disable recaps in /config)

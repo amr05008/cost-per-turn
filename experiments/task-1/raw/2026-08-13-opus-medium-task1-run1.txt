@@ -1,0 +1,94 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ /effort                                                                       
+  ⎿  Set effort level to medium (saved as your default for new sessions):
+     Balanced approach with standard implementation and testing
+
+❯ Use the posthog mcp associated with this project to analyze the last 30 days  
+  of data for GlutenOrNot. What are your top 3 insights? What 3 action items    
+  should I prioritize for further investigation to improve this app?            
+
+⏺ I'll pull the last 30 days of GlutenOrNot data from PostHog.
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+  Searched for 1 pattern, read 1 file, called plugin:posthog:posthog 18 times (ctrl+o to expand)
+
+⏺ Pulled 30 days (2026-07-14 → 08-13) from project 457245. Headline: 493 scan 
+  attempts, 429 successful, 97 distinct users — the app is ~10× the "~10 users"
+  your notes assume. Backend is clean: 1 claude_error, 0 server_error, 0
+  rate_limited, 0 client timeout beacons in the whole window.
+
+  Top 3 insights
+
+  1. OCR failures are a framing problem, and they kill first-run users.
+  This settles the 1.4.2 question you parked. Failed OCR scans have a median 
+  image of 186 KB vs 404 KB for successes, and average ocr_chars of 8 vs 749 —
+  Vision returns essentially nothing, not a partial read. That's a
+  small/distant/underexposed capture, not blur and not a Claude problem.
+
+  The cost is concentrated at the worst possible moment: 5 users produced 23 
+  ocr_failed events, 0 successes, and abandoned within 1–3 minutes of first 
+  opening the app. They are 5 of the 8 users who never got a single result.
+  Every one of them was a first-run user who never saw the product work.
+
+  2. A third of barcode scans are "we don't know" wearing a caution badge.
+  Of 278 barcode successes: 186 are caution, and 62 (22%) are caution + 
+  had_ingredient_data: false + low confidence — Open Food Facts returned a
+  product with no ingredient list, so the app hedged. Another 32 are caution/low
+  with ingredient data. That's 94 scans (34%) at low confidence, plus 25
+  not_found outright. Meanwhile openfoodfacts serves 91% of barcode hits; USDA
+  (4) and UPCitemdb (15) barely move. Overall, 67% of all scans end in caution —
+  the verdict that gives a shopper the least to act on.
+
+  3. The UK is a third of your usage and nobody has looked at it.
+  GB: 154 successful scans across 27 users (36% of all successes) vs US 224/56.
+  GB's failure rate is also lower (14 failures vs US 47). Combined with CA (27)
+  and AU (21), non-US is ~40% of volume. But Open Food Facts coverage, product
+  naming, and "may contain" labelling conventions differ by market, and none of
+  your 30-day data is broken out that way. Separately, menu mode is 9 scans out 
+  of 429 (2%) and non-English detection fired 3 times — the
+  traveler/multilingual work you've invested in is essentially unused.
+
+  3 action items to prioritize
+
+  1. Instrument the OCR capture funnel before shipping any more capture UX. You
+  can see failures but not why — you have no client event for "user opened
+  camera," "user took a shot," "user retried," or the on-device torch/focus
+  state. Add a lightweight scan_started event (method + mode, no content) so you
+  can compute a real capture→result conversion rate, and add a retry_index to
+  scan_failed. Right now the "5 users, 23 failures, 0 successes" cohort is only
+  visible by hand-querying; it should be a dashboard tile. The image_kb split
+  gives you the fix direction (framing guidance / minimum-size gate before
+  upload), but you're flying blind on whether the fix works.
+
+  2. Decide what a had_ingredient_data: false barcode scan should actually say.
+  62 scans in 30 days returned a low-confidence caution that is really "this
+  product isn't in the database." That's a different user action (photograph the
+  label) than "this might contain gluten" (put it back). Investigate whether
+  routing those directly into the OCR flow — "we found the product but not its
+  ingredients, scan the label" — converts, and whether the USDA/UPCitemdb
+  fallbacks are even being reached in those cases or bailing early.
+
+  3. Segment the UK cohort and find out what they're scanning. 27 users, 154
+  scans, better-than-US success rate — that's your strongest market by
+  engagement and you have no visibility into it. Worth checking barcode
+  not_found rate and verdict mix for GB specifically, and whether the
+  caution-heavy skew is worse there (Open Food Facts UK coverage, "may contain"
+  conventions). If GB caution rates are materially higher, that's a
+  prompt/data-source problem hitting a third of your users.
+
+  Two caveats on the numbers: distinct_id is a SHA-256 of the client IP, so "97
+  users" counts networks, not people — one user on cellular + home wifi is two,
+  and a shared coffee-shop IP is one. And per api/ANALYTICS.md, a client timeout
+  can log both a scan and a scan_failed, so don't read 64/493 as a clean
+  failure rate (though with 0 timeout beacons this window, the overlap is likely
+  near zero).
+
+✻ Worked for 2m 6s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data; I finished that and delivered three insights plus three prioritized action items. Next: pick which action item to pursue, likely instrumenting the OCR capture funnel. (disable recaps in /config)

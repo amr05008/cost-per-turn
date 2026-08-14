@@ -1,0 +1,197 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ Use the posthog API key associated with this project to analyze the last 30   
+  days of data for GlutenOrNot. What are your top 3 insights? What 3 action     
+  items should I prioritize for further investigation to improve this app?      
+
+⏺ I'll start by finding the API key and the event contract.
+
+  Read 1 file, listed 1 directory, recalled 2 memories (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Skill(glutenornot-debug)
+  ⎿  Successfully loaded skill
+
+⏺ Bash(set -a && PHX=$(grep -o 'phx_[A-Za-z0-9_]*' .env | head -1) && echo "key
+      len: ${#PHX}" && cat >
+      /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd…)
+  ⎿  key len: 52
+     ok
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad && echo "=== events in 30d ===" &&
+      ./q.sh "SELE…)
+  ⎿  === events in 30d ===
+     {
+       "cols": [
+     … +24 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== failure reasons ===" && ./q.sh "SELEC…)
+  ⎿  === failure reasons ===
+     {
+       "cols": [
+     … +191 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== barcode data_source x verdict ===" &&…)
+  ⎿  === barcode data_source x verdict ===
+     {
+       "cols": [
+     … +225 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== ocr image_kb / ocr_chars by confidenc…)
+  ⎿  === ocr image_kb / ocr_chars by confidence ===
+     {"cols":["conf","n","avg_kb","med_kb","avg_chars","med_chars"],"rows":
+     [["medium",59,404.0,406.0,858.0,770.0],["low",48,392.0,405.0,410.0,330
+     … +128 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== rescue rate (per failure event) ==="…)
+  ⎿  === rescue rate (per failure event) ===
+     {
+       "cols": null,
+     … +75 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== next-event after each event (abandonm…)
+  ⎿  === next-event after each event (abandonment) ===
+     {
+       "cols": [
+     … +33 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== eventual recovery within 15m (dedup b…)
+  ⎿  === eventual recovery within 15m (dedup by uuid) ===
+     {
+       "cols": [
+     … +203 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/dd0bb1d0
+      -2994-4b16-b6df-90fb016b5d28/scratchpad
+      echo "=== barcode: had_ingredient_data vs confi…)
+  ⎿  === barcode: had_ingredient_data vs confidence ===
+     {
+       "cols": [
+     … +66 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+⏺ Pulled 30 days (Jul 14 – Aug 13) from project 457245 via the query API.
+  Baseline: 430 successful scans, 64 failures, 89 scanning users, 98.8% iOS.
+
+  Top 3 insights
+
+  1. OCR failure is a dead end, and image size predicts it almost perfectly
+
+  Of 35 ocr_failed events, 33 were followed by another attempt within 10 minutes
+  — but only 7 (20%) ever reached a success within 15 min. Users retry and fail
+  again, then quit. Compare not_found (barcode): 19 of 26 recover. OCR failure
+  is where the app loses people.
+
+  The predictor is already in the payload:
+
+  ┌──────────┬─────────┬────────┬──────────────┐
+  │ image_kb │ success │ failed │ failure rate │
+  ├──────────┼─────────┼────────┼──────────────┤
+  │ <100     │ 3       │ 11     │ 79%          │
+  ├──────────┼─────────┼────────┼──────────────┤
+  │ 100–200  │ 10      │ 7      │ 41%          │
+  ├──────────┼─────────┼────────┼──────────────┤
+  │ 200–300  │ 18      │ 3      │ 14%          │
+  ├──────────┼─────────┼────────┼──────────────┤
+  │ 300–450  │ 57      │ 11     │ 16%          │
+  ├──────────┼─────────┼────────┼──────────────┤
+  │ 450+     │ 50      │ 3      │ 5.7%         │
+  └──────────┴─────────┴────────┴──────────────┘
+
+  Median failed image: 180 KB. Median successful: ~405 KB. One had image_kb: 0.
+  The server learns this after the upload and round-trip; the phone could know
+  it instantly.
+
+  Encouraging: OCR failure rate by week ran 20% → 26% → 20% → 16% → 0/21 in the 
+  partial Aug 9–13 week. That's consistent with the 1.4.x capture work landing,
+  but 21 scans is not proof.
+
+  2. The app's most common answer is "caution, low confidence" — and a fifth of 
+  that is manufactured uncertainty
+
+  Verdict mix: 71% caution, 21% safe, 8% unsafe. 35% of all scans are low
+  confidence, up from 18% in week one and flat since.
+
+  Two buckets are structural, not genuine risk:
+  - 62 barcode scans (22% of the barcode path) had had_ingredient_data: false — 
+  and 100% of them returned low-confidence caution. Product found, ingredients
+  unknown, verdict indistinguishable from "contains malt extract."
+  - OCR scans with <200 captured chars: 18 low / 1 medium / 0 high. Partial
+  label capture — the user photographed part of an ingredient list and got a
+  hedge.
+
+  For a "can I eat this?" app, that's the core value proposition degrading into
+  a shrug on roughly a third of scans.
+
+  3. One-and-done usage, iOS-only, and a large unexplained UK share
+
+  80 of ~96 users were active on exactly one day. Only 4 exceeded 3 days. There
+  are real power users (top: 84 events over 12 days, [TOWN-GB] GB), but weekly
+  actives are flat at 25–30 with no growth trend.
+
+  Web is 3 of 430 scans — functionally dead as a surface. And GB is 34% of all 
+  events from 27 users, second only to the US (272 events / 56 users) —
+  disproportionate for a product whose barcode waterfall leans on USDA and whose
+  fallbacks are US-centric.
+
+  ⚠️ Caveat on all retention numbers: distinct_id is a SHA-256 of client IP, so
+  a user who changes networks counts as a new user and a household counts as
+  one. The 83% single-day figure is an upper bound on churn, and I wouldn't act
+  on it directly (see action 3). The known scan/scan_failed overlap on client
+  timeouts also means failure rates here are slightly understated.
+
+  3 action items to prioritize
+
+  1. Decide 1.4.2's capture scope with the image_kb data, then gate on-device.
+  The image_kb split is the strongest lever in the dataset: a client-side
+  pre-upload check that rejects sub-200 KB captures with a retake prompt would
+  have prevented ~18 of 35 failures before a network round-trip, in the one
+  place where users are demonstrably abandoning. Before building: re-run the OCR
+  failure-rate-by-week query against the actual 1.4.1 rollout date. If the 0/21
+  week holds up as the fix already working, 1.4.2 doesn't need this; if it's
+  sample noise, this is the release.
+
+  2. Split "we don't know" out of "caution."
+  Investigate the 62 no-ingredient-data barcodes — specifically whether they
+  skew GB, which would point at Open Food Facts coverage gaps rather than a
+  generic long tail. Two things worth measuring first: do low-confidence
+  cautions end sessions at a higher rate than confident verdicts, and what
+  fraction of those 62 barcodes would a "photograph the label instead" fallback
+  rescue? That determines whether the fix is a new verdict state, a data-source
+  addition, or an in-app handoff to the OCR path.
+
+  3. Fix the retention instrument before optimizing retention.
+  Right now you cannot measure whether anyone comes back — IP-hash identity
+  makes the single-day figure uninterpretable, and that blocks judging every
+  other change. An install-scoped anonymous ID would fix it and doesn't touch
+  the "no record of what you scanned" invariant, but it does change the privacy
+  posture enough to warrant a policy/App Store label check before shipping.
+  Worth doing early, because insights 1 and 2 both eventually need "did this
+  bring users back?" to be answerable.
+
+✻ Crunched for 3m 52s
+
+※ recap: Goal was analyzing 30 days of GlutenOrNot PostHog data for insights and priorities; that analysis is delivered. Next action is yours: pick which of the three action items to pursue, starting with the OCR capture gate for 1.4.2. (disable recaps in /config)

@@ -1,0 +1,161 @@
+ ▐▛███▜▌   Claude Code v2.1.231
+▝▜█████▛▘  Opus 5 · Claude Max
+  ▘▘ ▝▝    ~/repos/glutenornot.com
+
+
+❯ /effort                                                                       
+  ⎿  Set effort level to medium (saved as your default for new sessions):
+     Balanced approach with standard implementation and testing
+
+❯ Use the posthog API key associated with this project to analyze the last 30   
+  days of data for GlutenOrNot. What are your top 3 insights? What 3 action     
+  items should I prioritize for further investigation to improve this app?      
+
+  Read 1 file, recalled 2 memories (ctrl+o to expand)
+
+⏺ Skill(posthog:querying-posthog-data)
+  ⎿  Successfully loaded skill
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Bash(grep -c . .env; grep 'POSTHOG_PERSONAL_API_KEY' .env | sed
+      's/=.*/=<set>/')
+  ⎿  11
+     POSTHOG_PERSONAL_API_KEY=<set>
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ No PostHog MCP tools are loaded in this session, so I'll use the personal API
+  key from .env against the query API directly (same path the weekly routine
+  uses).
+
+⏺ Bash(cat > /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24
+      433-293f-4a73-af07-070651914aab/scratchpad/phq.sh <<'EOF'
+      #!/bin/bash…)
+  ⎿  [
+       [
+         "scan",
+     … +11 lines (ctrl+o to expand)
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      echo "--- scan property keys ---"…)
+  ⎿  --- scan property keys ---
+     [
+       [
+     … +135 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      echo "=== A: method x platform x outcome ==="…)
+  ⎿  === A: method x platform x outcome ===
+     [
+       "ios",
+     … +162 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      echo "=== D: barcode scans: data_source x had_i…)
+  ⎿  === D: barcode scans: data_source x had_ingredient_data x verdict/conf
+      ===
+     [
+     … +66 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      echo "=== G: ocr_failed char distribution ==="…)
+  ⎿  === G: ocr_failed char distribution ===
+     ["0 chars",34,180.0]
+     [
+     … +139 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      echo "=== K: failures by week x reason (+ per-m…)
+  ⎿  === K: failures by week x reason (+ per-method rate) ===
+     [
+       "2026-06-29",
+     … +147 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Bash(cd /private/tmp/claude-501/-Users-aaronroy-repos-glutenornot-com/9cf24433
+      -293f-4a73-af07-070651914aab/scratchpad
+      ./phq.sh "SELECT properties.platform AS plat, e…)
+  ⎿  [
+       "unknown",
+       "scan",
+     … +33 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/aaronroy/repos/glutenornot.com
+
+⏺ Analyzed 30 days (2026-07-14 → 2026-08-13) via the query API. 430 scan + 64
+  scan_failed across 89 distinct devices.
+
+  Top 3 insights
+
+  1. The modal answer is a non-answer — 71% caution, 33% low confidence.
+  305/430 scans return caution, and 142 return confidence: low. That's not
+  verdict conservatism spread evenly; it decomposes into two structural buckets
+  that together are ~25% of all scans:
+  - 62 barcode scans (22% of barcode) resolved a product but got no ingredient 
+  list — 47 from Open Food Facts, 15 from UPCitemdb. Every one of them is
+  caution/low. The waterfall found a name and nothing to analyze.
+  - 47 OCR scans came back caution/low with ~419 chars of text vs ~990 chars for
+  the high-confidence ones — same image size (384 KB vs 407 KB). The picture is
+  fine; only part of the label made it into frame.
+
+  2. Failures have collapsed since 1.4.1, and what's left is capture quality, 
+  not connectivity.
+  Weekly scan_failed: 29 → 16 → 7 → 1, while scan volume held ~95–104/wk.
+  Connectivity failures (network) appear twice, both week of 07-27, none since —
+  the 1.4.1 fix looks real. The remaining failure is lopsided by method: OCR 
+  fails 19% of attempts (35/185); barcode only 8.5% (26/306). And hard OCR
+  failures are a distinct mode from the low-confidence ones above — median 0 
+  characters extracted, median image 186 KB vs 404 KB for successes. Tiny,
+  detail-free images returning literally nothing.
+
+  3. Small but real repeat usage, concentrated — and geographically not where 
+  you'd assume.
+  89 devices, 27 (30%) scanned once and never returned, but the top 5 devices
+  drove 39% of all scans (75, 35, 21, 18, 18). The UK is 36% of scans (154) vs 
+  US 45% (225), then CA 27 / AU 21. Web is effectively dead: 5 scans in 30 days
+  across web + unknown platforms, and the unknown bucket fails more than it
+  succeeds (12 failures vs ~2 successes in-window).
+
+  3 action items to prioritize
+
+  1. Build the "barcode found, no ingredients" hand-off. 22% of barcode scans
+  dead-end in a caution/low verdict that tells the user nothing. Two things to
+  investigate: whether the waterfall is actually reaching USDA/Nutritionix (only
+  4 USDA hits in 30 days looks low against 47 OFF-without-ingredients), and
+  whether the right UX is to immediately prompt "we found the product but not
+  its ingredients — snap the label" instead of returning a verdict. This is the
+  single largest addressable chunk of bad answers.
+
+  2. Split the OCR capture problem in two before building 1.4.2 capture assist.
+  The data says these are different bugs needing different fixes: hard failures
+  = image too small / no detail (0 chars, 186 KB), low-confidence = well-exposed
+  but partially framed (half the expected text). Framing guidance fixes the
+  second; it won't fix the first. Worth adding a capture telemetry property
+  (torch on/off, autofocus settled, crop-vs-full-frame) so the next release can
+  tell which one moved. This confirms the earlier "framing, not blur" read —
+  with the caveat that ~35 hard failures are a separate blur/distance problem.
+
+  3. Add app version to the scan events. $lib_version is posthog-node 4.18.0 —
+  the server SDK, not the app. There is no way today to attribute the
+  failure-rate drop to 1.4.1 versus normal variance, or to measure whether 1.4.2
+  capture assist works. Fix this before shipping 1.4.2, or you'll be reading
+  the same ambiguous weekly chart afterward.
+
+  Caveats: distinct_id is an IP hash, so "devices" over/under-counts real people
+  (shared NAT, changing IPs) and the 75-scan device may be your own testing.
+  The current week (08-10) is partial — 4 days. Per api/ANALYTICS.md, a client
+  timeout can double-count as both scan and scan_failed; there are no timeout
+  beacons in this window, so it doesn't bite here.
+
+✻ Brewed for 3m 27s
+
+※ recap: Goal was a 30-day PostHog read on GlutenOrNot; I've finished the analysis and delivered three insights plus three prioritized action items. Next up is your call on which action item to pursue, likely the barcode no-ingredients hand-off. (disable recaps in /config)
