@@ -11,6 +11,9 @@ costs you in quality.
 | **task-2** | Bounded generation — a markdown doc into an HTML slide deck | ships in this repo | done — 15 runs + a 5-run follow-up |
 | **task-3** | Compression + audience judgement — a commit log into release notes | ships in this repo | done — 20 runs |
 
+**Adding one?** [`HOW-TO-ADD-AN-EXPERIMENT.md`](HOW-TO-ADD-AN-EXPERIMENT.md) —
+the design recipe, the checklist, what's already settled, and `_template/`.
+
 **Start here: [`FINDINGS.md`](FINDINGS.md)** — what 54 runs across three tasks
 showed, and what would be worth running next.
 

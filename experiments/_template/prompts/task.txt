@@ -1,0 +1,2 @@
+TODO: the prompt. Bound the container (format, length, filename, audience);
+leave the content choices free.
