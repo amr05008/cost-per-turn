@@ -1,0 +1,3 @@
+I'm giving a 20-minute talk to product managers at my company about personal agents. Turn talk-source.md into a slide deck I can present from my laptop.
+
+Make it a single self-contained HTML file called deck.html — around 10 slides, one idea per slide, with speaker notes for each slide. Speaker notes are for me to read while presenting — they must not be visible on the slides themselves. It has to open straight from a file with no internet connection, so no CDN links, external fonts, or anything else fetched from the web.

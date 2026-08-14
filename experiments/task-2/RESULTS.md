@@ -89,10 +89,15 @@ never learn the source had a defect.
 ## The failure modes differ, and Kimi's is fixable
 
 **Kimi failed the same way twice:** speaker notes rendered onto the visible
-slides (r06, r09). That's one mechanical bug, not five kinds of bad judgement —
-and it's plausibly fixable with one line in the prompt, which would take the
-cheap arm from 3/5 to 5/5 and make the economics even more lopsided. Worth
-testing.
+slides (r06, r09). That looked like one mechanical bug rather than five kinds of
+bad judgement, and plausibly fixable with one line in the prompt.
+
+**It was tested, and the fix didn't help** — see `followup-notes-fix/`. Adding
+one sentence eliminated the notes bug completely (0/5 leaked) and the pass rate
+stayed at exactly 3/5, because two different mechanical failures appeared in
+their place: broken styling, and a deck that stops rendering at slide 5. The
+cheap arm has a *rate* of defects, not a nameable bug. Patch one and another
+takes its place.
 
 **The Opus arms failed in varied, editorial ways:** presentation flow (r01),
 mischaracterising four learnings as "four things that took longer" (r04),
