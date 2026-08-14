@@ -1,0 +1,3 @@
+call-notes.md is my raw notes from a call with a partner team, typed live during the call.
+
+Pull out the action items and save them to action-items.md as a numbered list, one action item per line, in the form `owner — action — when`. Write `unassigned` where the notes don't say who, and `no date` where they don't say when. Put nothing else in the file.
