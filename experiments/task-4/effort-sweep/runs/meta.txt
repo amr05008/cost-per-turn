@@ -1,6 +1,6 @@
-date:         2026-08-14T17:41:50Z
+date:         2026-08-14T17:44:42Z
 pi:           0.84.1
-reps_per_cell: 1
+reps_per_cell: 20
 prompt_sha:   54195771c5017627
 fixture_sha:  757338e7f994a209
 key_sha:      d8c76fce674ae85b

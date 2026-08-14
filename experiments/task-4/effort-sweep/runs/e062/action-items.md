@@ -1,0 +1,4 @@
+1. Priya — send Q3 usage numbers from the last integration — no date
+2. Priya — API scope doc — Thursday
+3. me — event volume estimates to Marcus — Friday
+4. Marcus — provide a sandbox tenant (sandbox + seeded demo org) — no date
