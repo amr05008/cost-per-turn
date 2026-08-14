@@ -1,0 +1,3 @@
+changelog.txt is the commit log for the next iOS release of GlutenOrNot, an app people use to check whether a food is gluten-free by scanning a barcode or photographing the ingredient label.
+
+Write the App Store "What's New" notes for this release and save them as release-notes.md. Maximum 250 words, in plain language for the people who use the app.

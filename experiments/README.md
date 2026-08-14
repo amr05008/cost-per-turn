@@ -8,13 +8,15 @@ costs you in quality.
 | task | shape | source | status |
 | --- | --- | --- | --- |
 | **task-1** | Open-ended analysis of a live analytics dataset | private PostHog project | pilot run 2026-08-13; not reproducible by others (see below) |
-| **task-2** | Bounded generation — a markdown doc into an HTML slide deck | ships in this repo | ready to run |
+| **task-2** | Bounded generation — a markdown doc into an HTML slide deck | ships in this repo | done — 15 runs + a 5-run follow-up |
+| **task-3** | Compression + audience judgement — a commit log into release notes | ships in this repo | ready to run |
 
 ## Read these in order
 
 1. `task-1/RESULTS.md` — what the pilot found, including why it isn't a valid cost comparison
 2. `../protocols/task-1-rerun.md` — the redesign that fixes it
-3. `task-2/README.md` — the setup, the planted error, and the predictions, all written before any run
+3. `task-2/README.md` + `task-2/RESULTS.md` — the setup, the planted error, and what 15 runs showed
+4. `task-3/README.md` — the answer key and predictions, written before any run
 
 ## The two tasks are deliberately opposite
 
