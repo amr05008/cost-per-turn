@@ -5,22 +5,55 @@
 
 Graded by the same scorer against the same key, both symlinked to the parent.
 
+## The metric was repaired mid-analysis. Read this first.
+
+A blind 12-list spot check on the three models no human had graded —
+Haiku, mini, nano — **rejected two runs that scored a mechanically perfect
+5/5 recall with zero surplus.** In task 4 that had never happened once in 15.
+
+Both rejected runs had **dropped the owners**:
+
+> `2. unassigned — Send event volume estimates to Marcus — Friday`
+
+That is the note-taker's own commitment, and the notes say so. **An action item
+with no owner is a note, not an action item** — and the scorer, which graded the
+action and explicitly ignored the owner, could not see it.
+
+**The repaired rule: shippable = recall 5/5 **and** at most one `unassigned`.**
+
+It is post-hoc, so it is held to the standard that implies:
+
+- **The answer key was never touched.** What changed is how the key is
+  aggregated into a verdict. Logged in `score.sh` with before/after numbers.
+- **Validated on 32 human judgements from two independent sessions** — it
+  explains all 6 recall-5/5 verdicts in the spot check *and* still agrees
+  **20/20** with task 4's original human pass.
+- **It makes results worse, not better** — Opus-low 20/20 → 15/20, Haiku-high
+  4/20 → 1/20. Not a flattering rule.
+- **Both columns ship.** `perfect` (pre-registered) stays in `scores.csv`
+  alongside `shippable` (repaired), so the original metric stays auditable.
+
+Every number below uses the repaired rule, with the pre-registered one shown
+beside it.
+
 ## The grid
 
-| model | $/M in→out | effort | recall | **shippable** | median $ | $/shippable |
+| model | $/M in→out | effort | pre-reg 5/5 | **shippable** | median $ | $/shippable |
 | --- | --- | --- | --- | --- | --- | --- |
-| Opus 5 | 5 → 25 | high | 5.00 | **20/20** | $0.0578 | $0.059 |
-| Opus 5 | | low | 5.00 | **20/20** | $0.0362 | $0.037 |
-| Sonnet 5 | 2 → 10 | high | 5.00 | **20/20** | $0.0252 | $0.026 |
-| Sonnet 5 | | low | 4.80 | 16/20 | $0.0156 | $0.021 |
-| Kimi K3 | 3 → 15 | high | 4.45 | 9/20 | $0.0426 | $0.098 |
-| Kimi K3 | | low | 4.45 | 9/20 | $0.0179 | $0.040 |
-| Haiku 4.5 | 1 → 5 | high | 3.60 | 4/20 | $0.0112 | $0.056 |
-| Haiku 4.5 | | low | 3.75 | 3/20 | $0.0112 | $0.074 |
-| GPT-5.4-mini | .75 → 4.5 | high | 4.10 | 2/20 | $0.0089 | $0.096 |
-| GPT-5.4-mini | | low | 2.85 | **0/20** | $0.0037 | — |
-| GPT-5.4-nano | .2 → 1.25 | high | 3.90 | **0/20** | $0.0021 | — |
-| GPT-5.4-nano | | low | 3.10 | 1/20 | $0.0014 | $0.028 |
+| Opus 5 | 5 → 25 | high | 20/20 | **19/20** | $0.0578 | $0.062 |
+| Opus 5 | | low | 20/20 | 15/20 | $0.0362 | $0.049 |
+| Sonnet 5 | 2 → 10 | high | 20/20 | **20/20** | $0.0252 | $0.026 |
+| Sonnet 5 | | low | 16/20 | 16/20 | $0.0156 | $0.021 |
+| Kimi K3 | 3 → 15 | high | 9/20 | 9/20 | $0.0426 | $0.098 |
+| Kimi K3 | | low | 9/20 | 9/20 | $0.0179 | $0.040 |
+| Haiku 4.5 | 1 → 5 | high | 4/20 | 1/20 | $0.0112 | $0.224 |
+| Haiku 4.5 | | low | 3/20 | **0/20** | $0.0112 | — |
+| GPT-5.4-mini | .75 → 4.5 | high | 2/20 | 2/20 | $0.0089 | $0.096 |
+| GPT-5.4-mini | | low | 0/20 | **0/20** | $0.0037 | — |
+| GPT-5.4-nano | .2 → 1.25 | high | 0/20 | **0/20** | $0.0021 | — |
+| GPT-5.4-nano | | low | 1/20 | 1/20 | $0.0014 | $0.028 |
+
+**Sonnet 5 at high effort is the only cell in the grid that never failed.**
 
 ## 1. Model tier finally predicted quality — and price is not the axis
 
@@ -29,16 +62,17 @@ FINDINGS #1** ("model tier never predicted whether the output was usable").
 
 | model | price | shippable @ high |
 | --- | --- | --- |
-| Opus 5 | 5 → 25 | 20/20 |
+| Opus 5 | 5 → 25 | 19/20 |
 | **Kimi K3** | **3 → 15** | **9/20** |
 | **Sonnet 5** | **2 → 10** | **20/20** |
-| Haiku 4.5 | 1 → 5 | 4/20 |
+| Haiku 4.5 | 1 → 5 | 1/20 |
 | GPT-5.4-mini | .75 → 4.5 | 2/20 |
 | GPT-5.4-nano | .2 → 1.25 | 0/20 |
 
 **Within the Anthropic family, price tracks capability — with a cliff, not a
-slope.** Opus and Sonnet are indistinguishable at 20/20. Haiku falls off a
-ledge to 4/20. The boundary sits between $2/$10 and $1/$5, and nothing about
+slope.** Opus and Sonnet are indistinguishable at the top. Haiku falls off a
+ledge to **1/20** — it produced a usable list once in forty runs across both
+effort levels. The boundary sits between $2/$10 and $1/$5, and nothing about
 the price sheet would tell you where.
 
 **Across families, price predicts nothing.** Kimi K3 costs **50% more per token
@@ -53,37 +87,44 @@ an objective task across a **20x** band and the effect is unmissable.
 The old finding wasn't wrong. It was **under-powered on price range and blunted
 by subjective grading**, and it should be restated that way rather than deleted.
 
-## 2. Arm O's answer: effort didn't measurably matter for any model
+## 2. Arm O's answer: effort matters, but only for models good enough to use it
 
-**Within-model, high vs low — the only legitimate comparison here:**
+**Within-model, high vs low:**
 
 | model | high | low | p (Fisher) | median cost change |
 | --- | --- | --- | --- | --- |
-| Opus 5 | 20/20 | 20/20 | 1.00 | **−37%** |
+| Opus 5 | 19/20 | 15/20 | 0.18 | **−37%** |
 | Sonnet 5 | 20/20 | 16/20 | 0.11 | **−38%** |
 | Kimi K3 | 9/20 | 9/20 | 1.00 | **−58%** |
-| Haiku 4.5 | 4/20 | 3/20 | 1.00 | 0% |
+| Haiku 4.5 | 1/20 | 0/20 | 1.00 | 0% |
 | GPT-5.4-mini | 2/20 | 0/20 | 0.49 | **−58%** |
 | GPT-5.4-nano | 0/20 | 1/20 | 1.00 | −33% |
 
-**Not one model showed a statistically significant effort effect, and turning
-effort down cut cost 33–58%.** On this task, high reasoning effort was money
-spent on nothing.
+No single model reaches significance at n=20. **But the two models capable of
+doing the task at all both lost exactly four runs**, in the same direction, at
+the same magnitude. Pooled — same vendor, same thinking-budget mechanism, both
+above this task's capability bar:
 
-**The caveat that keeps this honest: n=20 cannot distinguish "no effect" from "a
-20% drop."** Sonnet's 20/20 → 16/20 is p=0.11 — not significant, and also not
-nothing. A one-in-five failure rate matters enormously in practice, and this
-design can't rule it out. **Do not read the table as "effort is free to turn
-off."** Read it as: *the effect, if any, is smaller than 20 runs can resolve,
-and the saving is 33–58%.*
+> **Opus + Sonnet: 39/40 at high effort vs 31/40 at low. p = 0.014.**
 
-**Where effort could plausibly matter is a narrow band.** Opus is comfortably
-above the bar for this task and Kimi/Haiku/nano are comfortably below it — in
-both regimes effort has nothing to buy. Sonnet is the only model sitting *at*
-the threshold, and it is the only one whose point estimate moved. If that
-pattern is real, **reasoning effort buys something only when the model is near
-the capability threshold for the task** — which would make it a knob you tune
-per task-and-model rather than set globally.
+**That is a real effect**, and it is the opposite of what the pre-registered
+metric said before the spot check repaired it. Under the old rule Opus showed
+20/20 → 20/20 and the honest summary was "no measurable effect." The runs Opus
+lost at low effort were losing *owners*, which the old metric didn't count.
+
+**The three models below the bar show nothing, because they have nothing to
+lose.** Kimi is flat at 9/20, Haiku at ~0, nano at ~0. Effort can't buy a
+capability that isn't there.
+
+> **Reasoning effort buys accuracy only where the model is already close to
+> succeeding.** Above the bar it's insurance; below it, it's money on fire. That
+> makes effort a per-model-and-task knob, not a global setting — and it means
+> the cheap-model advice "just turn thinking off" is exactly backwards: the
+> models where you'd most want the saving are the ones already failing.
+
+**Cost of that insurance, on this task: 37–38%.** Sonnet at high effort costs
+$0.026 per shippable list against $0.021 at low — **24% more for the only
+never-fails cell in the grid.**
 
 ## 3. The order in which extraction abilities fail
 
@@ -96,14 +137,21 @@ per task-and-model rather than set globally.
 | A3 | infer the owner from who was speaking | haiku |
 | **A4** | **link a stated precondition to a later decision** | **kimi, sonnet-low** |
 
-**A4 is the whole experiment.** Across all twelve cells, **shippable count
-equals A4 count exactly** — every run that made that one inference got
-everything else right, and every run that missed it was unusable. A 240-run grid
-reduces to a single binary.
+**A4 is necessary but — after the repair — no longer sufficient.** Under the
+pre-registered rule, shippable count equalled A4 count in all twelve cells: the
+grid reduced to one binary. The owner check adds a **second gate**, and it bites
+in exactly two cells — Opus-low (20 found A4, 15 shippable) and Haiku-high (4
+found A4, 1 shippable). Everywhere else, making that one inference still
+predicts everything.
+
+So the honest version is two gates, not one: **can it link a precondition to a
+decision, and can it hold on to who owes what.** The second only becomes visible
+when you either drop the effort or drop the tier.
 
 **My designed difficulty ladder was wrong about A5.** I built it as tier 4, the
 hardest, on the theory that burying an item in an opening tangent would defeat
-extraction. It was the *third easiest* — 240/240 for every model down to Haiku.
+extraction. It came *third* — missed 18 times in 240, all of them by mini-low
+and nano, and never once by Opus, Sonnet, Kimi or Haiku.
 **Positional burial is not difficulty. Inference is.** Anything that needs two
 facts joined across a document is a different order of problem from anything
 that needs a document read carefully.
@@ -119,8 +167,10 @@ five and gives no signal which one. Paying 24% more for a rate that never failed
 is obviously correct, and cost-per-shippable does not say so.
 
 **The reductio is in the table.** GPT-5.4-nano at low effort scores **$0.028 per
-shippable list** — putting it within spitting distance of Sonnet — on the
-strength of **1 success in 20 runs.** Any metric that ranks a 5% success rate
+shippable list** — within spitting distance of Sonnet's $0.026 — on the strength
+of **1 success in 20 runs.** Haiku at high effort looks *expensive* at $0.224
+for the same reason, on 1 success in 20. Both numbers are noise wearing a
+decimal point. Any metric that ranks a 5% success rate
 alongside a 100% one is measuring the wrong thing.
 
 > **Cost per acceptable result is only meaningful above a reliability floor.

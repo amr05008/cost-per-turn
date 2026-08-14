@@ -33,9 +33,27 @@ QUIET=${1:-}
 
 NUMBERED='^[[:space:]]*[0-9]+[.)]'
 out=runs/scores.csv
-echo "run_id,listed,recall,surplus,found,missed,fell_for,a3_owner,perfect" > "$out"
+echo "run_id,listed,recall,surplus,unassigned,found,missed,fell_for,a3_owner,perfect,shippable" > "$out"
 
-tot=0; perfect_n=0
+# ── TWO VERDICT COLUMNS, ON PURPOSE ───────────────────────────────────────
+# `perfect`   the PRE-REGISTERED rule: recall 5/5 and zero surplus. Kept
+#             unchanged so the original metric stays auditable.
+# `shippable` the REPAIRED rule: recall 5/5 and at most one `unassigned` owner.
+#
+# The repair is post-hoc and driven by human ground truth, not by tuning. The
+# effort sweep's blind spot-check rejected two runs that scored 5/5 with zero
+# surplus; both had dropped owners ("unassigned — send event volume estimates"
+# is the note-taker's own commitment). An action item with no owner is a note.
+#
+# Validated on 32 human judgements from two independent grading sessions:
+# explains all 6 recall-5/5 verdicts in the spot check, and still agrees 20/20
+# with task 4's original human pass. It makes several arms look WORSE
+# (opus-low 20/20 -> 15/20, haiku-high 4/20 -> 1/20), which is the opposite of
+# a flattering rule.
+#
+# THE ANSWER KEY WAS NOT TOUCHED. What changed is how the key is aggregated
+# into a verdict, logged here with before/after numbers per key.sh's rule.
+tot=0; perfect_n=0; ship_n=0
 for f in runs/*/action-items.md; do
   [ -s "$f" ] || continue
   id=$(basename "$(dirname "$f")"); tot=$((tot+1))
@@ -90,23 +108,30 @@ for f in runs/*/action-items.md; do
   elif printf '%s\n' "$a3line" | grep -Eqi "$A3_OWNER_RX"; then a3=named
   else a3=unassigned; fi
 
+  # Owner attribution. Every one of the five items has an owner recoverable
+  # from the notes, so `unassigned` is always a miss, not a valid reading.
+  una=$(printf '%s\n' "$lines" | grep -Eci 'unassigned')
+
   perfect=no
   [ "$recall" = 5 ] && [ "$sur" = 0 ] && { perfect=yes; perfect_n=$((perfect_n+1)); }
+  shippable=no
+  [ "$recall" = 5 ] && [ "$una" -le 1 ] && { shippable=yes; ship_n=$((ship_n+1)); }
 
-  echo "$id,$listed,$recall,$sur,\"$found\",\"$missed\",\"$fps\",$a3,$perfect" >> "$out"
+  echo "$id,$listed,$recall,$sur,$una,\"$found\",\"$missed\",\"$fps\",$a3,$perfect,$shippable" >> "$out"
 
   [ "$QUIET" = "--quiet" ] && continue
-  printf '── %s · listed=%-3s recall %s/5 [%s] · surplus=%s%s%s%s\n' \
-    "$id" "$listed" "$recall" "$found" "$sur" \
+  printf '── %s · listed=%-3s recall %s/5 [%s] · surplus=%s · unassigned=%s%s%s%s\n' \
+    "$id" "$listed" "$recall" "$found" "$sur" "$una" \
     "${fps:+ · fell for: $fps}" "$fmt" \
-    "$([ "$a3" = named ] && echo ' · A3 owner named')"
+    "$([ "$shippable" = no ] && [ "$recall" = 5 ] && echo ' · ⚠ 5/5 but owners dropped')"
   if [ "$sur" -gt 0 ]; then
     printf '%s' "$surplus" | grep -E '[^[:space:]]' | cut -c1-104 | sed 's/^[[:space:]]*/     ▸ /'
   fi
 done
 
 echo
-echo "$tot runs scored · $perfect_n perfect (5/5 recall, 0 surplus) · wrote $out"
+echo "$tot runs scored · $perfect_n perfect (pre-registered: 5/5, 0 surplus)"
+echo "$(printf '%*s' ${#tot} '')            $ship_n shippable (repaired: 5/5, <=1 unassigned) · wrote $out"
 echo
 echo "NEXT: read the ▸ lines above. Each is a false-positive CANDIDATE, not a"
 echo "confirmed one. A line that is really a rephrasing of a planted item means"

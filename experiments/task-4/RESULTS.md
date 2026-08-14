@@ -13,9 +13,16 @@ changed is the most useful thing this task produced.**
 
 | arm | spend | recall | mech. perfect | **shippable** | $ / shippable |
 | --- | --- | --- | --- | --- | --- |
-| pi · Opus 5 | $1.17 | **5.00**/5 | 13/20 | **20/20** | $0.059 |
+| pi · Opus 5 | $1.17 | **5.00**/5 | 13/20 | 19/20 | $0.062 |
 | pi · Sonnet 5 | $0.51 | **5.00**/5 | **20/20** | **20/20** | **$0.026** |
 | pi · Kimi K3 | $0.89 | 4.45/5 | 8/20 | 9/20 | $0.098 |
+
+> **Updated after the effort sweep.** The `shippable` column originally read
+> 20/20 for Opus. A blind spot check in `effort-sweep/` later found that a
+> 5/5 list which drops the *owners* is not shippable either, and the rule became
+> **recall 5/5 and at most one `unassigned`**. One Opus run fails it. The rule
+> still agrees 20/20 with the human pass below; see
+> [`effort-sweep/RESULTS.md`](effort-sweep/RESULTS.md) for the full accounting.
 
 **The mechanical metric and the human disagreed on 25% of the sample, and every
 single disagreement ran the same direction:** runs the scorer failed, the human
@@ -49,6 +56,10 @@ separates them** — Sonnet is 2.3x cheaper per shippable list.
 Kimi is the only arm that actually loses, and it loses on the axis that matters:
 9/20 shippable at $0.098 each, the most expensive per usable result despite the
 cheapest median run.
+
+**The tie survived the repair, narrowly** — 19/20 vs 20/20 rather than 20/20
+vs 20/20, which does not change the conclusion that price, not capability,
+separates these two arms on this task.
 
 **Caveat on the tie, and it is a real one.** The shippable column extrapolates
 the rule *recall 5/5 → shippable* from 20 graded lists to all 60. The rule held
