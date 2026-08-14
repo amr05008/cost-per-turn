@@ -14,3 +14,6 @@ out/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Batch runner logs (HOW-TO-ADD-AN-EXPERIMENT tells you to create these)
+batch.log

@@ -40,7 +40,7 @@ diligence.
 
 All on pi via OpenRouter at `--thinking high`, so the harness is held constant
 and **only the model varies**. Task 2 measured the harness effect and found none
-worth paying for. **No Anthropic key needed.** Est. **~$6**.
+worth paying for. **No Anthropic key needed.** Measured at smoke test: **~$0.05/run, so ~$3 for the batch.**
 
 n=20 is **pre-committed**, not a starting point. Running 15 and topping up after
 seeing the rate would be p-hacking on a binary metric, and the reps are cheap

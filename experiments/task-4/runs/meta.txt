@@ -1,0 +1,7 @@
+date:         2026-08-14T15:56:49Z
+pi:           0.84.1
+reps_per_arm: 20
+thinking:     high
+prompt_sha:   54195771c5017627
+fixture_sha:  757338e7f994a209
+key_sha:      d8c76fce674ae85b

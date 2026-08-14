@@ -19,7 +19,11 @@
 # map lives in runs/sample-map.csv, which stays closed until grading is done.
 set -uo pipefail
 cd "$(dirname "$0")"
-N_OTHERS=10
+N_PERFECT=10   # 41 of 60 runs scored perfect and 59 of 60 are textually distinct,
+N_OTHERS=10    # so the perfect stratum has to be capped or this becomes 51 lists.
+               # Sampled by hash across all perfect runs, so arms appear roughly
+               # in proportion — which is what prediction 5 asks about: do
+               # mechanically-perfect lists read as shippable?
 
 if [ "${1:-}" = "--join" ]; then
   # sample-grades.csv is `label,verdict,note` — join it back to run ids.
@@ -39,7 +43,8 @@ fi
 # uncorrelated with arm.
 h() { printf '%s' "$1" | shasum -a 256 | cut -c1-12; }
 
-perfect=$(awk -F, 'NR>1 && $NF=="yes"{print $1}' runs/scores.csv)
+perfect=$(awk -F, 'NR>1 && $NF=="yes"{print $1}' runs/scores.csv \
+          | while read -r r; do echo "$(h "$r") $r"; done | sort | head -"$N_PERFECT" | cut -d' ' -f2)
 others=$(awk -F, 'NR>1 && $NF!="yes"{print $1}' runs/scores.csv \
          | while read -r r; do echo "$(h "$r") $r"; done | sort | head -"$N_OTHERS" | cut -d' ' -f2)
 

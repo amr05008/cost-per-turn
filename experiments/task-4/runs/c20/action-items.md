@@ -1,0 +1,5 @@
+1. Priya — dig up and send Q3 usage numbers from the last integration — no date
+2. Priya — send API scope doc (endpoints, auth model, pilot commitments) — Thursday
+3. Me (PM, Kestrel) — send event volume estimates to Marcus — Friday
+4. Marcus — spin up sandbox tenant for Kestrel testing — no date
+5. Marcus — add plan.changed event to event catalog to support webhooks — no date
