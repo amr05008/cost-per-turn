@@ -103,13 +103,34 @@ four-item list that simply left a commitment out. An extraction that is wrong
 FINDINGS #6 warned about in a different register: under-detection is
 indistinguishable from a pass.
 
-## The cheapest model was the most expensive per correct answer
+## On this task there was no cheap-vs-good tradeoff at all
 
-**$0.098 per shippable list for Kimi against $0.059 for Opus and $0.026 for
-Sonnet** — on a task where Kimi's median *run* cost 26% less than Opus's. Sticker
-price inverted the moment correctness was priced in, and it inverts on the
-mechanical metric too ($0.111 vs $0.090). This is the one conclusion that
-survives both cost models unchanged.
+**Sonnet 5 was the least expensive model in the batch and also the best.** Not a
+compromise pick — the cheapest sticker price of the three ($2/$10 per M tokens
+against Opus's $5/$25), the cheapest median run ($0.025), full recall on every
+run, and the lowest cost per shippable list at $0.026.
+
+| arm | $/M in→out | median run | $ / shippable |
+| --- | --- | --- | --- |
+| Sonnet 5 | **2 → 10** | **$0.025** | **$0.026** |
+| Kimi K3 | 3 → 15 | $0.043 | $0.098 |
+| Opus 5 | 5 → 25 | $0.058 | $0.059 |
+
+**Correction to an earlier draft of this file, which called Kimi "the cheapest
+model."** It isn't. **Kimi K3 is priced above Sonnet 5** — 50% more per input
+token, 50% more per output token — and its median run cost 69% more. It is
+cheaper than *Opus*, which is the only comparison tasks 2 and 3 could make,
+because Sonnet wasn't in those batches. The accurate claim is narrower and
+still worth having:
+
+> **Kimi cost more per usable result than either Anthropic arm ($0.098 vs $0.059
+> and $0.026), while sitting in the middle of the price sheet.** Cheaper per run
+> than Opus, more expensive per answer than both.
+
+**This repo has never actually tested a cheap model.** Across four tasks the
+"budget" arm has been Kimi K3, which is mid-priced. The entire tier question has
+so far been asked across a **2.5x price band**. That is a narrow base for the
+claim tasks 2 and 3 rest on, and it is the gap the effort sweep should close.
 
 **Round-trips were identical — 3 — across all sixty runs.** So unlike task 2
 (96 vs 5 round-trips, 12x cost gap), nothing here is explained by turn count.

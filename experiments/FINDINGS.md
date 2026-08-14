@@ -25,9 +25,16 @@ Tasks 2 and 3 are clean.
 | 3 | pi · Opus 5 | 3/10 |
 | 3 | pi · Kimi K3 | 3/10 |
 
-Five arms, two tasks, a ~12x price range — and not one comparison produced a
-difference in hit rate. On task 3 the **single best output came from the
-cheapest model**.
+Five arms, two tasks, a ~12x spread in what the runs actually cost — and not one
+comparison produced a difference in hit rate. On task 3 the **single best output
+came from the cheaper of the two models tested**.
+
+**Read that with one caveat, added after task 4.** The "budget" arm throughout
+this repo is Kimi K3 at **$3/$15 per M tokens**, which is *cheaper than Opus 5
+($5/$25) but more expensive than Sonnet 5 ($2/$10)*. It is a mid-priced model,
+not a cheap one. Tasks 2 and 3 never contained a model below Opus's tier, so
+**the tier question has only ever been asked across a 2.5x price band.** No
+genuinely cheap model has been tested here yet.
 
 What did differ was the ceiling, and only on task 2: Kimi produced zero
 favourites there at any price, while both Opus arms produced two each. On task 3
