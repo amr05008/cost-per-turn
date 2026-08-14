@@ -9,7 +9,10 @@ costs you in quality.
 | --- | --- | --- | --- |
 | **task-1** | Open-ended analysis of a live analytics dataset | private PostHog project | pilot run 2026-08-13; not reproducible by others (see below) |
 | **task-2** | Bounded generation — a markdown doc into an HTML slide deck | ships in this repo | done — 15 runs + a 5-run follow-up |
-| **task-3** | Compression + audience judgement — a commit log into release notes | ships in this repo | ready to run |
+| **task-3** | Compression + audience judgement — a commit log into release notes | ships in this repo | done — 20 runs |
+
+**Start here: [`FINDINGS.md`](FINDINGS.md)** — what 54 runs across three tasks
+showed, and what would be worth running next.
 
 ## Read these in order
 
