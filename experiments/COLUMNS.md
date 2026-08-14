@@ -7,8 +7,11 @@ work it did → the raw token detail.
 | column | what it is |
 | --- | --- |
 | `run_id` | Matches the folder in `runs/` and the row in `key.csv`. Opaque on purpose so decks can be graded without seeing the config. |
+| `arm` | Which configuration this run was, merged from `key.csv` |
 | `harness` | `claude-code` or `pi` |
 | `model` | **Read from the session log, not from the run label.** If a run silently fell back to a different model, you see it here. Two values joined by `+` means the model changed mid-session. |
+| `verdict` | Your quality call, merged from `grades.csv` — `favorite` / `acceptable` / `unusable` |
+| `review_note` | Why, in your words. Blank where nothing needed saying. |
 | `cost_usd` | What the run actually cost. Claude Code reports this directly; for pi it's the sum of per-message costs from the provider. |
 | `wall_clock` | Human-readable duration, e.g. `11m 27s` |
 | `wall_clock_s` | Same thing in seconds — use this one for math |
@@ -26,13 +29,18 @@ work it did → the raw token detail.
 
 | file | holds | when to open it |
 | --- | --- | --- |
-| `runs-extracted.csv` | cost + tokens + timing, keyed by `run_id` | any time |
-| `grades.csv` | your quality verdict per `run_id` | you write it while grading |
-| `key.csv` | which arm/model each `run_id` was | **only after grading is done** |
+| `grades.csv` | your verdict + note per `run_id` | **you write this first, while grading** |
+| `key.csv` | which arm each `run_id` was | **keep shut until `grades.csv` is written** |
+| `runs-extracted.csv` | everything joined — cost, tokens, timing, arm, verdict | after grading |
 
-Join all three on `run_id`. Keeping `key.csv` shut until `grades.csv` is written
-is what makes the grading blind — `runs-extracted.csv` is not blind, since
-harness and model are inherent to the run.
+`extract-runs.py` folds `grades.csv` and `key.csv` into `runs-extracted.csv`
+automatically whenever they exist, so one sheet holds the whole experiment and
+re-running the extractor never wipes your grading. Both sidecars are optional —
+before grading, those columns are simply blank.
+
+Keeping `key.csv` shut until `grades.csv` is written is what makes the grading
+blind. The decks themselves carry no config, so it's genuinely blind as long as
+you don't peek.
 
 ## The two numbers that matter most
 

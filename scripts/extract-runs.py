@@ -158,7 +158,8 @@ def parse_pi(path):
 # Column order is for reading left-to-right: what ran, what it cost, how long,
 # how much work, then the raw token detail. See experiments/COLUMNS.md.
 FIELDS = [
-    "run_id", "harness", "model", "cost_usd", "wall_clock", "wall_clock_s",
+    "run_id", "arm", "harness", "model", "verdict", "review_note",
+    "cost_usd", "wall_clock", "wall_clock_s",
     "round_trips", "tool_calls", "input_tokens", "output_tokens",
     "cache_read_tokens", "cache_write_tokens", "session_error",
     "native_turn_count", "session_id",
@@ -188,6 +189,26 @@ def main():
         print(f"  {run_id}: {row['harness']:<11} {row['model']:<28} ${row['cost_usd']:<7} "
               f"{row['round_trips']:>3} round-trips  {row['tool_calls']:>3} tool calls  "
               f"{row['wall_clock_s']}s")
+
+    # Fold in the human columns if they exist, so one sheet holds everything and
+    # re-running the extractor doesn't wipe the grading. Both are optional.
+    def _sidecar(name, want):
+        path = run_dir / name
+        if not path.exists():
+            return {}
+        with path.open() as fh:
+            return {r["run_id"]: {k: r.get(k, "") for k in want}
+                    for r in csv.DictReader(fh) if r.get("run_id")}
+
+    grades = _sidecar("grades.csv", ("verdict", "note"))
+    arms = _sidecar("key.csv", ("arm",))
+    for r in out_rows:
+        g = grades.get(r["run_id"], {})
+        r["verdict"] = g.get("verdict", "")
+        r["review_note"] = g.get("note", "")
+        r["arm"] = arms.get(r["run_id"], {}).get("arm", "")
+    if grades:
+        print(f"  + merged {len(grades)} graded verdicts")
 
     out = run_dir / "runs-extracted.csv"
     with out.open("w", newline="") as fh:
