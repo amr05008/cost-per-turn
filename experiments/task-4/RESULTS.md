@@ -1,29 +1,61 @@
 # Task 4 — results
 
-**60 runs · $2.57 · graded mechanically against a key committed before run 1**
+**60 runs · $2.57 · mechanical grading against a key committed before run 1,
+plus a 20-list blind human pass**
 
-## The headline: the tie broke, and the middle tier won
+## The headline: recall is the whole game, and precision barely counts
 
 Tasks 2 and 3 tied every arm they compared — 3/5, 3/5, 3/5, then 3/10, 3/10.
 Task 4 is the first task in this repo where model tier predicted the outcome.
 
-**It did not predict it monotonically.**
+But the headline changed once a human graded the output, and **the way it
+changed is the most useful thing this task produced.**
 
-| arm | spend | recall | perfect | $ / perfect | median $ |
+| arm | spend | recall | mech. perfect | **shippable** | $ / shippable |
 | --- | --- | --- | --- | --- | --- |
-| pi · Opus 5 | $1.17 | **5.00**/5 | 13/20 | $0.090 | $0.058 |
-| pi · Sonnet 5 | $0.51 | **5.00**/5 | **20/20** | **$0.026** | $0.025 |
-| pi · Kimi K3 | $0.89 | 4.45/5 | 8/20 | $0.111 | $0.043 |
+| pi · Opus 5 | $1.17 | **5.00**/5 | 13/20 | **20/20** | $0.059 |
+| pi · Sonnet 5 | $0.51 | **5.00**/5 | **20/20** | **20/20** | **$0.026** |
+| pi · Kimi K3 | $0.89 | 4.45/5 | 8/20 | 9/20 | $0.098 |
 
-**Sonnet 5 was perfect on all twenty runs** — exactly five action items, the
-correct five, no false positives, every time. Against Opus that is 20/20 vs
-13/20, **p = 0.008** (Fisher exact, two-tailed). Against Kimi, p < 0.0001.
+**The mechanical metric and the human disagreed on 25% of the sample, and every
+single disagreement ran the same direction:** runs the scorer failed, the human
+would ship. Zero mechanically-perfect runs were rejected.
 
-The frontier model was beaten by the model one tier below it, and cost 3.5x more
-per correct answer to lose.
+The reason is that `perfect` weights the two error types equally, and **a human
+does not.**
 
-**Opus vs Kimi did not separate** (13/20 vs 8/20, p = 0.20) — but they failed in
-completely different ways, and one of those ways is far more dangerous.
+| in the graded sample | shippable | unusable |
+| --- | --- | --- |
+| **recall 5/5** | **15** | **0** |
+| **recall 4/5** | **0** | **5** |
+| surplus 0 (no false positives) | 10 | 1 |
+| surplus ≥ 1 | 5 | 4 |
+
+**Recall separated shippable from unusable perfectly, 20 for 20. Precision
+predicted nothing.** Five lists were graded *"usable but I'd delete the
+rev-share item"* — and one list carrying a false positive was still graded a
+**favorite**.
+
+**A spurious action item costs a delete keystroke. A missing one costs a dropped
+roadmap commitment.** That asymmetry is invisible to any symmetric metric, and
+it is the thing to carry out of this task.
+
+### What that does to the model comparison
+
+On the mechanical metric Sonnet beat Opus 20/20 vs 13/20 (Fisher exact,
+**p = 0.008**). On the human standard **they tie at 20/20, and only price
+separates them** — Sonnet is 2.3x cheaper per shippable list.
+
+Kimi is the only arm that actually loses, and it loses on the axis that matters:
+9/20 shippable at $0.098 each, the most expensive per usable result despite the
+cheapest median run.
+
+**Caveat on the tie, and it is a real one.** The shippable column extrapolates
+the rule *recall 5/5 → shippable* from 20 graded lists to all 60. The rule held
+without exception in the sample, but only 8 Opus and 5 Sonnet runs were graded,
+and **the maximum surplus ever put in front of a human was one extra item.** The
+worst over-lister in the batch — c28, three spurious items — was never sampled.
+"One junk line is survivable" is measured; "three is survivable" is not.
 
 ## The two failure modes are not interchangeable
 
@@ -51,7 +83,10 @@ with the very reason they don't belong: *"revisit the co-branded onboarding
 screen **(parked pending Northwind brand review)** — after the pilot"*, *"loop in
 procurement **once the pilot clears 500 connected accounts**"*. It extracted the
 nuance correctly and listed the item anyway. That is a disposition, not a
-comprehension failure, and a one-line prompt change would probably fix it.
+comprehension failure — **and the human pass says it costs nothing.** Every
+Opus run in the sample was shippable, including the ones the scorer failed. Five
+were graded *"usable but I'd delete the rev-share item"*; one was a **favorite**
+in spite of it.
 
 **Kimi substitutes, and that is the dangerous one.** It missed A4 in 11 of 20
 runs — and in **6 of 20 it returned exactly five items: the right count, the
@@ -60,16 +95,21 @@ place. A human skimming that list has no signal that anything is missing. The
 count looks right, the formatting looks right, and a roadmap commitment has
 quietly fallen out of the follow-up email.
 
-**This is the finding that generalises past this task.** An extraction that is
-wrong *and the right length* is invisible without a key. It is exactly what
+**This is the finding that generalises past this task**, and the human pass
+confirmed it the hard way: **all five lists graded `unusable` were Kimi runs
+that had dropped A4** — including one with no false positive at all, a clean
+four-item list that simply left a commitment out. An extraction that is wrong
+*and the right length* is invisible without a key. It is exactly what
 FINDINGS #6 warned about in a different register: under-detection is
 indistinguishable from a pass.
 
 ## The cheapest model was the most expensive per correct answer
 
-$0.111 per perfect extraction for Kimi against $0.090 for Opus, on a task where
-Kimi's median run cost 26% less. Sticker price inverted once correctness was
-priced in.
+**$0.098 per shippable list for Kimi against $0.059 for Opus and $0.026 for
+Sonnet** — on a task where Kimi's median *run* cost 26% less than Opus's. Sticker
+price inverted the moment correctness was priced in, and it inverts on the
+mechanical metric too ($0.111 vs $0.090). This is the one conclusion that
+survives both cost models unchanged.
 
 **Round-trips were identical — 3 — across all sixty runs.** So unlike task 2
 (96 vs 5 round-trips, 12x cost gap), nothing here is explained by turn count.
@@ -124,8 +164,17 @@ method note is the informative outcome.
    the one that was never anybody's job, not the one that was killed. D5 drew
    0/60, so the control held: false positives are discrimination failing on hard
    cases, not models spraying items at random.
-5. **"Mechanical `perfect` and the human verdict disagree on ≥20%."**
-   *Pending* — the 20-list blind human pass has not been graded yet.
+5. **"Mechanical `perfect` and the human verdict disagree on ≥20%."** *Right* —
+   **25%, 5 of 20** — but right for a reason the prediction didn't anticipate.
+   I expected noise in both directions. Every disagreement went one way: the
+   scorer was harsher than the human, always because of a false positive the
+   human simply deleted. The prediction was correct and the model behind it was
+   wrong.
+
+**Scored across the whole task: one half-right, three wrong, one right-for-the-
+wrong-reason.** The two that mattered most — #3 and #4 — were both wrong, and
+prediction 2 ("precision is where tier shows up") was not just wrong but
+backwards: precision is the axis that turned out *not to matter to anyone*.
 
 ## Method notes
 
@@ -160,18 +209,66 @@ method note is the informative outcome.
 - **No harness comparison.** All three arms are pi; task 2 found no harness
   effect worth paying for and those runs were spent on reps instead.
 
+## The grading metric was wrong, and that is worth as much as the result
+
+Task 4 was built to escape taste, and the mechanical scorer did exactly what it
+was designed to do: `recall`, `listed` and `surplus` are reproducible, need no
+judgement, and every number in them survived inspection. The scorer was not
+inaccurate.
+
+**It was mis-weighted**, and only a human could have revealed that. `perfect`
+treats one spurious line and one missing commitment as the same failure. The
+person who has to send the follow-up email does not, and the gap between those
+two views is 25% of the sample and the entire Opus-vs-Sonnet result.
+
+The lesson is not "mechanical grading doesn't work." It is:
+
+> **A mechanical metric encodes a cost model. Write the cost model down, and
+> check it against a human before you let the metric pick a winner.**
+
+Ten runs of human grading, on a stratified sample, cost about fifteen minutes
+and overturned the headline of a 60-run batch. That is the cheapest correction
+in this project so far — and it is a step that FINDINGS #6 (*"quality judgement
+resists automation"*) implies but never states directly: even when the
+*measurement* automates cleanly, the *weighting* doesn't.
+
+The honest headline metric for this task is therefore **cost per shippable
+result**, where shippable = full recall, precision ignored. On that basis both
+Anthropic arms are equivalent and Sonnet is 2.3x cheaper.
+
 ## What this earns for the next experiment
 
-**Arm O — reasoning effort — is now the obvious next run**, and this fixture is
-its natural home. Opus's only failure mode is over-inclusion; if low effort
-removes it, the result is a one-word config change that turns a 13/20 into
-something near 20/20 at lower cost. That is the most directly actionable thing
-this project has surfaced.
+The human pass reordered this list. Two candidates that looked strong before it
+are now much weaker, and the reason is worth stating: **anything aimed at
+reducing over-listing is aimed at a problem nobody has.**
 
-**The prompt-sensitivity question is now sharp too.** Every false positive in
-the batch is an item nobody committed to. A single added sentence — *"only
-include items someone committed to"* — is a five-minute experiment with a
-plausible large effect. Task 2's follow-up showed that fixing a named failure
-mode doesn't raise the pass rate because defects relocate; this is a clean
-chance to test whether that holds when the failure is a disposition rather than
-a defect.
+**Weaker than they looked:**
+
+- **Arm O, reasoning effort, framed as a fix for over-inclusion.** Opus's only
+  failure mode is listing extra items, and the human deleted them without
+  complaint. Cutting effort to suppress a costless error buys nothing.
+- **The prompt patch** — *"only include items someone committed to."* Same
+  problem: it targets precision. Worth one cheap run to confirm it doesn't
+  *damage* recall, not worth a batch.
+
+**Stronger than they looked:**
+
+- **Arm O aimed at recall instead.** The real question is whether effort moves
+  A4-type items — the ones requiring two facts to be linked across a document.
+  If low effort costs recall, that is a config change with a genuine failure
+  attached, and it's the same fixture and rig. This is now the obvious next run.
+- **A harder fixture, targeting the one axis that matters.** A4 was the only
+  discriminating item out of five, and A5's positional burial did nothing.
+  A task-4b built entirely from A4-shaped items — commitments that follow from
+  a decision rather than being stated — would discriminate on every item instead
+  of one in five, at the same cost per run.
+- **Surplus at higher doses.** Every graded list carried at most one spurious
+  item. c28 carried three and was never seen. If shippability degrades somewhere
+  between one and three, there *is* a precision threshold and this task simply
+  never reached it. Ten lists, fifteen minutes.
+
+**The originally-planned task 4b — a fixture with only two real items — is now
+more interesting, not less.** If a model reports five items on a document
+containing two, that is a recall-shaped error dressed as over-listing: it means
+inventing commitments, not merely including weak ones. The human standard says
+that would matter.
