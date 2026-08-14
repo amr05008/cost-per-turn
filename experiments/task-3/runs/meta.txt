@@ -1,0 +1,4 @@
+date:        2026-08-14T01:42:53Z
+pi:          0.84.1
+reps_per_arm: 10
+source_sha:  9419e595c54b3053

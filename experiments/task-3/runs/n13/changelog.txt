@@ -1,0 +1,401 @@
+commit 0a360a0
+Author date: 2026-07-19
+Subject: Apply torch after a settle window — mount-time gate wasn't enough
+
+TestFlight build 1 on-device: "Turn on flashlight & retry" lit the
+button but not the LED; a manual toggle seconds later worked. So the
+quirk is deeper than mount-time prop application — an enableTorch
+transition fired right at onCameraReady is silently dropped while the
+native session settles.
+
+Split user intent (torch, drives the button) from what reaches
+CameraView (torchApplied): the applied value flips on only once the
+camera has been ready for TORCH_SETTLE_MS (750ms) — emulating the
+timing of a human toggle, the path that provably works. Manual toggles
+on a long-running camera stay instant (delay collapses to zero past
+the window). Covers the retry path and every scan-cycle remount.
+
+Runbook gains the confirmed quirk + the constant to raise if a future
+device still drops it.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 369a5f5
+Author date: 2026-07-19
+Subject: Harden torch application against expo-camera mount-time quirk
+
+enableTorch pre-set at CameraView mount is the path expo-camera has
+historically fumbled on iOS — and the camera remounts constantly here
+(the spinner or a system state replaces it on every scan cycle), so the
+flashlight-retry flow and every scan-with-torch-on round-trip rode that
+unproven path.
+
+Gate the prop on cameraReady and reset the gate whenever the camera
+unmounts: the torch now always reaches the camera as a false→true
+transition on a live camera — the same code path as the manual toggle,
+which works everywhere. The 2s onCameraReady fallback now only ticks
+while the camera is actually mounted, so it can't mark an unmounted
+camera ready and defeat the gate.
+
+Test drives the remount path with a camera that never auto-reports
+ready: torch prop must stay off until onCameraReady, then flip on.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit fead058
+Author date: 2026-07-19
+Subject: Bump version to 1.4.0 for iOS release
+
+PR #15's connectivity handling (pre-flight offline check, expo-network
+native dep) and capture-assist Phase 2 (torch + flashlight-retry,
+/api/track failure beacon, __DEV__ log gating) ship in this build.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 695cfd5
+Author date: 2026-07-19
+Subject: Merge pull request #19 from amr05008/feat/capture-assist-phase-2
+
+Capture assist Phase 2: torch, flashlight-retry, client failure beacon
+---
+commit 0eeb168
+Author date: 2026-07-19
+Subject: Capture assist Phase 2: torch, flashlight-retry, client failure beacon
+
+Phase 2 of plans/ocr-capture-assist-2026-07-18.md — the no-data-dependency
+half of attacking the 25% OCR failure rate, shipping in iOS 1.4.0.
+
+- Torch: new torch glyph in Icon.tsx, overlay toggle on the camera screen
+  wired to CameraView enableTorch; session-scoped state survives retakes
+  and result round-trips. The "Couldn't read that" screen's primary is now
+  "Turn on flashlight & retry" (pre-enables the torch — dim light is the
+  likeliest fixable cause), falling back to "Try again" when already on.
+- POST /api/track beacon: records client-side scan_failed for timeout/
+  network — the two failures that die on the wire and are invisible to the
+  server (why the 2026-07-11 incident was hard to triage). Reason/method
+  allowlist so server reasons can't be spoofed; own per-IP rate limit
+  (50/day, separate map — failed scans never consume the scan allowance);
+  same hashed-IP + coarse-geo shape as server events; structurally cannot
+  emit `scan` (regression-tested — scan stays success-only).
+- services/api.ts fires the beacon fire-and-forget from the timeout/
+  network throw sites in both scan paths; never on server errors,
+  user-cancel, or the pre-flight offline check (those were never sent).
+- All scan-content console logging (barcode values, full API results)
+  gated behind __DEV__ — Sentry captures console as breadcrumbs in
+  release builds, and "no record of what you scanned" applies there too.
+- Docs: reason enum + double-count caveat (client timeout can yield both
+  a server `scan` and a beacon `scan_failed` for one attempt) in
+  CLAUDE.md/ROADMAP; RELEASE.md smoke checklist gains the torch-on-
+  remount hardware check jest can't prove; ROADMAP telemetry item done.
+
+Privacy check: policy needs no change — "why it failed" already covers
+the new reasons and the beacon adds no new data categories.
+
+Built TDD (each test watched failing first). Adversarially reviewed
+(fresh-eyes subagent): SHIP verdict; both flagged fixes (beacon rate
+limit, double-count documentation) included here.
+
+Tests: web 194/194, mobile jest 54/54, tsc clean.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 141eb2d
+Author date: 2026-07-19
+Subject: Merge pull request #18 from amr05008/feat/opus-4-8-model-bump
+
+Bump pinned Claude model claude-sonnet-4-6 → claude-opus-4-8
+---
+commit 6ebb065
+Author date: 2026-07-19
+Subject: Harden model bump per adversarial review
+
+- callClaude now warns when a response truncates at max_tokens (with
+  output_tokens) — truncation previously degraded to the generic caution
+  fallback as a silent 200, invisible in logs and counted as a scan success
+- 5 new tests probing the first-text-block finder: preceding non-text
+  block, empty-string text block, type-less block (intentionally strict),
+  non-array content, and the truncation warning
+- CLAUDE.md quick ref: Claude API (Sonnet) -> (Opus)
+- Decision record 002 superseding the 2026-06-18 "stay on Sonnet" call
+  (Aaron's 2026-07-19 decision: fallback plan pins hop 1 to the primary
+  model, cost bounded by the 50-scans/day rate limit; latency trade-off
+  accepted, revisit via weekly data review)
+- Softened the analyze.js maxTokens comment — "near the old cap" claimed
+  evidence we don't have; the new truncation warning generates it
+
+Also A/B'd the barcode path's "### Product Data:" framing live on both
+models: unsafe/high on barley malt extract from each; Opus additionally
+flags non-certified oats. No false-safe.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 0745bc6
+Author date: 2026-07-19
+Subject: Bump pinned Claude model claude-sonnet-4-6 -> claude-opus-4-8
+
+Phase 0 of the analysis-resilience plan (OpenRouter fallback lands on top
+of this pin). Opus 4.8 buys verdict-quality headroom on celiac-safety
+output; the ~1.7x cost is bounded by the 50-scans/day rate limit. Landing
+this before the 1.4.0 release keeps the post-release low-confidence-OCR
+metric on a single model instead of confounding it mid-window.
+
+- callClaude now extracts the first text block instead of assuming
+  content[0] (resilient to non-text blocks a future model/config prepends)
+- maxTokens doubled (analyze 4096, barcode 2048): the Opus 4.7+ tokenizer
+  yields ~1-1.35x the tokens for the same JSON, and long menu responses
+  were near the old 2048 cap
+- test mocks now carry type:'text' to match the real wire shape
+
+Validated on a 7-case frozen A/B batch (real prompt + parser, live API):
+identical verdicts on all label cases, zero false-safe regressions; menus
+come back stricter (bread/pasta dishes now flagged), the direction the
+guidelines want.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit d56cb17
+Author date: 2026-07-19
+Subject: Wrap-up doc pass: UPCitemdb in docs, 1.4.0 release scope, session log
+
+- README still described the Nutritionix-era waterfall in three places
+- ROADMAP: check off the OCR instrumentation (PR #17)
+- CLAUDE.md: point sessions at plans/ (active capture-assist plan)
+- RELEASE.md: next build = 1.4.0 with PR #15 + capture-assist Phase 2
+- Privacy policy: soften "cannot be linked back to you" to "not linked
+  to any account or identity" — resolves the wording tension flagged in
+  the 2026-07-18 skills-audit session (IP-hash distinct_id supports the
+  weaker claim, not the stronger one); rides today's re-date
+- Session log for the data-review → PR #16/#17 session
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 82f58a2
+Author date: 2026-07-18
+Subject: Merge pull request #17 from amr05008/feat/ocr-capture-instrumentation
+
+Instrument OCR captures: image_kb + ocr_chars on scan events
+---
+commit 119fb8d
+Author date: 2026-07-18
+Subject: Fix fork criterion tautology + harden per adversarial review
+
+/grill on PR #17 caught an analytical defect: ocr_chars is 0 on every
+ocr_failed BY CONSTRUCTION (the event only fires when Vision finds no
+text), so the plan's fork criterion "ocr_chars ~ 0 dominates -> aiming
+problem" was a tautology that would have confirmed itself regardless of
+reality. The fork now keys on the real discriminator: the image_kb
+distribution of failures vs successes (plus ocr_chars on low-confidence
+successes). The collected data was already sufficient — only the
+decision rule and comments were wrong.
+
+Also from the review:
+- Reject non-string image with 400 (was: imageKb = NaN shipped to
+  PostHog as null and junk shipped to Vision)
+- Pin the untested catch paths: whitespace-only OCR (return path),
+  claude_error carries both metrics, Vision-API failure attaches
+  image_kb but OMITS ocr_chars (absent means "failed before OCR",
+  zero means "no text found" — the distinction now has a test)
+- Privacy policy: the analytics enumeration read as exhaustive but
+  omitted confidence/platform/outcome and the new quality metrics —
+  now lists them all (counts only, never text); effective date bumped
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 13f9df5
+Author date: 2026-07-18
+Subject: Instrument OCR captures: image_kb + ocr_chars on scan events
+
+Phase 1 of plans/ocr-capture-assist-2026-07-18.md. Before building a
+client-side blur pre-check on a guessed threshold, learn what actually
+causes the 25% OCR failure rate:
+
+- ocr_chars ~ 0 on ocr_failed = Vision found no text (aiming problem;
+  blur detection would not help) vs low image_kb correlating with
+  failures (blur/light problem; a size-threshold pre-check would help).
+- ocr_chars on successes correlates partial reads with the observed
+  low-confidence caution verdicts.
+
+Counts only, never content — consistent with the privacy policy's "no
+record of what you scanned" (a byte count identifies nothing).
+
+Also checks in the scoped plan for the 1.4.0 capture-assist work.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit b37d3c3
+Author date: 2026-07-18
+Subject: Merge pull request #16 from amr05008/feat/upcitemdb-barcode-fallback
+
+Add UPCitemdb barcode fallback + log missed barcodes to PostHog
+---
+commit ee17dc2
+Author date: 2026-07-18
+Subject: Harden UPCitemdb fallback per adversarial review
+
+Four fixes from /grill on PR #16:
+
+- PRIVACY (controlling): drop the barcode property from scan_failed
+  analytics — the privacy policy promises "no record of what you scanned"
+  and no product names in events, and a UPC resolves to a product name.
+  Missed barcodes stay visible only in ephemeral Vercel runtime logs.
+  Regression-guarded in code, tests, CLAUDE.md, and ROADMAP.
+- WRONG-PRODUCT GUARD: skip UPCitemdb for sub-12-digit codes (it zero-pads
+  EAN-8 into the UPC-A/EAN-13 space — a live EAN-8 probe returned an
+  unrelated product) and reject hits whose returned upc/ean doesn't match
+  the query modulo leading zeros, mirroring the USDA gtinUpc check.
+- RELIABILITY CAVEAT: retail-scraped ingredient statements now carry a
+  DATA RELIABILITY note capping confidence — a stale 2016 listing must
+  never produce "safe/high" in a celiac app.
+- Tighten extraction (uppercase INGREDIENTS label + comma sanity check),
+  fix four comments that claimed "name-only, never ingredients" above the
+  extraction code, count all 6 possible fetches in the timeout comment,
+  and add the handler-level test for the extraction→Claude path.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit b00610a
+Author date: 2026-07-18
+Subject: Add UPCitemdb barcode fallback + log missed barcodes to PostHog
+
+Nutritionix discontinued its free tier (Syndigo, $499/mo minimum), so the
+third barcode source never materialized and ~15% of barcode scans in the
+last two weeks dead-ended in not_found. UPCitemdb's keyless trial tier
+(100 lookups/day, ~20x current volume) fills the slot: name/brand for any
+product, and for many grocery items the manufacturer ingredient statement
+embedded in its description field, which then gets a full Claude analysis
+instead of the name-only caution.
+
+not_found scan_failed events now carry the missed barcode so PostHog can
+distinguish real coverage gaps from scan noise.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 9d06581
+Author date: 2026-07-18
+Subject: Wrap-up doc pass: skills pointer in CLAUDE.md, session log
+
+Records the glutenornot-release skill move (claude-channels → here) and
+the reasoning for leaving glutenornot-debug private. The session log also
+carries one open item: the privacy policy's "cannot be linked back to
+you" line is stronger than the IP-hash + geo triage practice the debug
+skill documents.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+---
+commit 53e44bf
+Author date: 2026-07-18
+Subject: Add glutenornot-release skill to the repo
+
+Moves the iOS release skill from the private claude-channels repo into
+this one, making it the single source of truth. ~/.claude/skills now
+symlinks here, so it still loads globally on the Mac.
+
+Genericized two Aaron-specific phrasings for a public audience. The
+skill stays thin on purpose — mobile/RELEASE.md remains the runbook.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+
+---
+commit 76a9517
+Author date: 2026-07-11
+Subject: Wrap-up doc pass: RELEASE.md pending-release block, session log
+
+PR #15 merged to main but deliberately unreleased (a connectivity UX fix
+alone isn't worth an App Store build) — the release runbook now carries
+what the next release must know: expo-network is a new native dep, and
+publishing an eas update while the version is still 1.3.0 would deliver
+a bundle importing a native module the shipped binaries don't have.
+Also: test count 40→45, offline smoke-check now expects the instant
+pre-flight path, and a session log covering the PR grill/merge and the
+Sentry resolve-to-arm tripwire watching connectivity until the build.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 486565d
+Author date: 2026-07-11
+Subject: Merge pull request #15 from amr05008/fix/graceful-connectivity-handling
+
+Handle poor connectivity gracefully on scan (offline check + clear copy)
+---
+commit 0f24343
+Author date: 2026-07-11
+Subject: ROADMAP: log the client connectivity fix + deferred follow-ups
+
+Records the pre-flight connectivity work (this PR) under Error
+Monitoring & Observability, and tracks the three deferred items
+(auto-retry, client-side scan_failed telemetry, server/client timeout
+reconciliation) as TODOs so they aren't lost.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+---
+commit 6bc62a9
+Author date: 2026-07-11
+Subject: Handle poor connectivity gracefully on scan (offline check + clear copy)
+
+On a weak/dropped connection the app fired a single request with no
+pre-flight check and surfaced generic "Request timed out / Network error"
+copy — which reads as "the app is broken." Worse, when the server completed
+a scan but the response didn't reach the phone in time, the user saw a
+failure for a scan that actually succeeded, with no hint it was their
+connection. (Root-caused from a real 2026-07-11 report: a client timeout at
+21:32:53 + the device's IP-derived id changing between the failing and
+working sessions = unstable network; backend was healthy throughout.)
+
+- Add a pre-flight connectivity check (expo-network) to both the OCR and
+  barcode paths: fail fast and clearly when offline instead of hanging
+  30-60s for a request that can't land.
+- Reword network/timeout messages to name the connection, so a transient
+  blip stops reading as an app failure.
+- Never let the connectivity probe itself block a scan (probe error or
+  unknown reachability falls through to the real request).
+- Remove a stray, unimported services/api 2.ts duplicate.
+
+Adds services/__tests__/api.test.ts (5 tests). Full suite: 45 pass;
+tsc --noEmit clean.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+---
+commit 43e21ea
+Author date: 2026-07-07
+Subject: Wrap-up doc pass: README features, stale ROADMAP item, watch note
+
+README gains the Recents and multilingual features; the pre-1.1 "release
+fixes for v1.0" ROADMAP item is marked superseded; the release session
+log records the 7-day rollout watch and confirms the privacy label change.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit 3b8cdaf
+Author date: 2026-07-07
+Subject: Mark App Store privacy label update done (v1.3.0 submission)
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
+commit ac57948
+Author date: 2026-07-07
+Subject: Close out iOS v1.3.0 release
+
+RELEASE.md: last-shipped header, Release-config smoke variant (agent-
+friendly, no Metro), Recents smoke checklist item, ~/.sentryclirc token
+note, stale jest count. Session log + index entry.
+
+Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>
+
+---
