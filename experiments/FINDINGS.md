@@ -137,6 +137,25 @@ the grading is `diff`, no human in the loop, and n can go to 20+ per arm cheaply
 If the tie holds there too, finding #1 becomes very hard to argue with. If it
 breaks, you've found the boundary — which is more useful still.
 
+**Leading candidate: parsing a synthetic set of call notes** containing five
+planted action items, checking whether it catches all five. Grading is a `diff`.
+
+**Measure precision, not just recall.** A model that lists twelve things scores
+5/5 on recall trivially — and a bloated action list is the failure mode you'd
+actually want to catch. Two mechanical numbers, no judgement:
+
+- **recall** — how many of the five planted items it found
+- **precision** — how many things it listed that weren't action items
+
+**Graduate the difficulty, or everything scores 5/5 and nothing varies.**
+Something like two items stated outright ("I'll send the deck Friday"), two
+implicit ("we should probably get legal to look at that" — a commitment with no
+owner), and one buried in a tangent. Add a deliberate near-miss that sounds like
+a commitment but isn't ("someone should really look at pricing at some point");
+counting it is a precision error, and that's what separates careful from eager.
+
+Short outputs, so n=20+ per arm is affordable.
+
 ### B. The MCP price list ⭐
 
 Mechanical, needs no grading at all: run a trivial task under each
