@@ -27,6 +27,14 @@ DEBUG = "--debug" in sys.argv
 BLOCK_TYPES = set()
 
 
+def _mmss(seconds):
+    """Seconds -> "11m 27s". Spreadsheets are read by people."""
+    if seconds in ("", None):
+        return ""
+    s = int(round(float(seconds)))
+    return f"{s // 60}m {s % 60:02d}s"
+
+
 def _blocks(content):
     return [b for b in content if isinstance(b, dict)] if isinstance(content, list) else []
 
@@ -81,7 +89,9 @@ def parse_claude(path):
         "round_trips": rt,
         "tool_calls": tools,
         "native_turn_count": res.get("num_turns"),
-        "is_error": res.get("is_error"),
+        # Did the HARNESS report a failed session (API error, aborted run)?
+        # Says nothing about whether the output is any good.
+        "session_error": "yes" if res.get("is_error") else "no",
         "session_id": res.get("session_id", ""),
         "final_text": final,
     }
@@ -139,16 +149,19 @@ def parse_pi(path):
         "round_trips": rt,
         "tool_calls": tools,
         "native_turn_count": "",
-        "is_error": "",
+        "session_error": "not reported by pi",
         "session_id": "",
         "final_text": final,
     }
 
 
+# Column order is for reading left-to-right: what ran, what it cost, how long,
+# how much work, then the raw token detail. See experiments/COLUMNS.md.
 FIELDS = [
-    "run_id", "harness", "cost_usd", "input_tokens", "output_tokens",
-    "cache_read_tokens", "cache_write_tokens", "wall_clock_s", "round_trips",
-    "tool_calls", "native_turn_count", "is_error", "session_id",
+    "run_id", "harness", "model", "cost_usd", "wall_clock", "wall_clock_s",
+    "round_trips", "tool_calls", "input_tokens", "output_tokens",
+    "cache_read_tokens", "cache_write_tokens", "session_error",
+    "native_turn_count", "session_id",
 ]
 
 
@@ -170,6 +183,7 @@ def main():
         # Blind grading: the answer file is named by run_id only, no config in it.
         (answers / f"{run_id}.md").write_text(row.pop("final_text") or "")  # chat reply
         row["run_id"] = run_id
+        row["wall_clock"] = _mmss(row.get("wall_clock_s"))
         out_rows.append({k: row.get(k, "") for k in FIELDS})
         print(f"  {run_id}: {row['harness']:<11} {row['model']:<28} ${row['cost_usd']:<7} "
               f"{row['round_trips']:>3} round-trips  {row['tool_calls']:>3} tool calls  "
