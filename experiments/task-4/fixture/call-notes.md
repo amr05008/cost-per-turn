@@ -36,8 +36,8 @@ my notes, typed live, not cleaned up
 
 ~14:11 — rate limits
   currently 60 rpm per partner key, org-level not per-account
-  M can't size a bump without knowing what we'd actually throw at them, fair
-  me: I'll send our event volume estimates Friday so they can size it properly. Devin already has the numbers out of the Segment pipe
+  M reckons that's fine for pilot volume and would rather not touch it until we're past the pilot, but wants our numbers on file either way
+  me: I'll send our event volume estimates Friday. Devin already has them out of the Segment pipe
 
 ~14:13 — test access
   D: can't build against prod, obviously. asked what non-prod looks like

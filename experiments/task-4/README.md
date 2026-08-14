@@ -101,7 +101,21 @@ experiment and knew there were five, knew the tier structure, and knew roughly
 what the distractors looked like. A 5/5 from a primed reader is not evidence the
 task is easy, and shouldn't be reported as if it were.
 
-Three near-misses were removed from the fixture during authoring because each
+**A fourth was found by the smoke test, and the fixture changed because of it.**
+The rate-limits block originally read *"I'll send our event volume estimates
+Friday **so they can size it properly**"* — which states outright that Northwind
+will size the limit, making it a real sixth action item. Neither reader caught
+it; Opus listed it on the first run. The line now has Marcus explicitly
+declining to touch the limit until after the pilot, so A2 keeps its motivation
+and nobody commits to sizing anything.
+
+**The key was not touched, and the smoke runs were discarded.** This is the
+distinction the protocol turns on: fixing *unintended ambiguity in the fixture*
+is repairing the instrument; adjusting the *key* to accommodate an output is the
+task-1 failure. Cost of finding it: $0.15 and three runs. Everything below this
+line ran against fixture `sha 757338e7f994a209` or later.
+
+Three further near-misses were removed from the fixture during authoring because each
 created a defensible sixth item: Marcus committing to seed plan data in the
 sandbox, Priya committing to pull the self-serve/sales-assisted split, and
 Kestrel's implied webhook-receiver work — the last killed by a line establishing
