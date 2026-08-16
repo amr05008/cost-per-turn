@@ -25,11 +25,13 @@ SOURCES = [
     ("3-relnotes",    EXP / "task-3/runs"),
     ("4-actionitems", EXP / "task-4/runs"),
     ("4-effort",      EXP / "task-4/effort-sweep/runs"),
+    ("4-local",       EXP / "task-4/local/runs"),
 ]
 
 PRICE = {"opus": (5, 25), "sonnet": (2, 10), "kimi": (3, 15),
          "haiku": (1, 5), "mini": (.75, 4.5), "nano": (.2, 1.25),
-         "opus-5": (5, 25), "kimi-k3": (3, 15)}
+         "opus-5": (5, 25), "kimi-k3": (3, 15),
+         "glimmer": (0, 0)}   # local: $0 marginal, paid in wall-clock
 
 COLS = ["task", "run_id", "harness", "model", "effort", "in_per_m", "out_per_m",
         "cost_usd", "round_trips", "tool_calls", "input_tokens", "output_tokens",
@@ -56,7 +58,8 @@ def rows():
             short = (r.get("model") or "").split("/")[-1].replace("claude-", "")
             short = {"opus-5": "opus", "sonnet-5": "sonnet", "kimi-k3": "kimi",
                      "haiku-4.5": "haiku", "gpt-5.4-mini": "mini",
-                     "gpt-5.4-nano": "nano"}.get(short, short)
+                     "gpt-5.4-nano": "nano", "muse-glimmer:30b-mlx": "glimmer",
+                     "muse-glimmer:30b": "glimmer"}.get(short, short)
             p = PRICE.get(short, ("", ""))
             yield {
                 "task": task, "run_id": rid, "harness": r.get("harness", ""),
