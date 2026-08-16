@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What a million tokens costs</title>
+<style>
+  /* Tokens live on :root so the page gutter outside the card reads them too.
+     Light is the bare-:root default; dark is *selected* (its own steps from the
+     same hues, validated against the dark surface), declared under both the OS
+     media query and the explicit theme stamp so a toggle wins either way. */
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-2:      #f2f2f0;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #86847e;
+    --rule:           #e2e1dd;
+    --series-1:       #2a78d6;
+    --series-2:       #eb6834;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1:      #0d1117;
+      --surface-2:      #161b22;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #8b949e;
+      --rule:           #23282f;
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1:      #0d1117;
+    --surface-2:      #161b22;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #8b949e;
+    --rule:           #23282f;
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { background: var(--surface-1); }
+
+  .viz-root {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font-family: ui-sans-serif, -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    padding: 40px 44px 34px;
+    max-width: 940px;
+    margin: 0 auto;
+  }
+
+  .kicker {
+    font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--series-1); margin: 0 0 10px;
+  }
+  h1 { font-size: 27px; line-height: 1.2; font-weight: 650; margin: 0 0 7px; letter-spacing: -.015em; }
+  .sub { font-size: 14px; line-height: 1.55; color: var(--text-secondary); margin: 0 0 22px; max-width: 80ch; }
+
+  .legend { display: flex; gap: 20px; align-items: center; margin: 0 0 20px; }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+  .swatch { width: 11px; height: 11px; border-radius: 2px; flex: none; }
+
+  /* ---- plot ----
+     --lab reserves room at the right of every track for the tip label, so the
+     longest bar can reach full scale without its value running off the edge.
+     Bars, gridlines and ticks all divide the same (100% - var(--lab)) width. */
+  .plot { position: relative; --lab: 58px; }
+  .grid { position: absolute; inset: 0 0 26px 0; pointer-events: none; }
+  .grid i {
+    position: absolute; top: 0; bottom: 0; width: 1px; background: var(--rule);
+  }
+  .row {
+    display: grid; grid-template-columns: 132px 1fr; gap: 16px;
+    align-items: center; padding: 9px 0; position: relative;
+  }
+  .row + .row { border-top: 1px solid var(--rule); }
+  .name { font-size: 14px; font-weight: 600; line-height: 1.25; }
+  .vendor { display: block; font-size: 11.5px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+  .track { position: relative; }
+  .bar {
+    height: 15px; border-radius: 0 4px 4px 0; position: relative;
+    min-width: 2px;
+  }
+  .bar.in  { background: var(--series-1); margin-bottom: 2px; } /* 2px surface gap */
+  .bar.out { background: var(--series-2); }
+  .tip {
+    position: absolute; left: calc(100% + 9px); top: 50%; transform: translateY(-50%);
+    font-size: 13px; font-weight: 650; color: var(--text-primary); white-space: nowrap;
+  }
+  .axis {
+    display: grid; grid-template-columns: 132px 1fr; gap: 16px;
+    font-size: 11.5px; color: var(--text-muted); padding-top: 8px;
+  }
+  .axis .ticks { position: relative; height: 14px; }
+  .axis .ticks b { position: absolute; transform: translateX(-50%); font-weight: 400; white-space: nowrap; }
+
+  .note {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    margin: 26px 0 0; padding-top: 20px; border-top: 1px solid var(--rule);
+  }
+  .note p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+  .note b { color: var(--text-primary); font-weight: 650; display: block; margin-bottom: 3px; font-size: 13px; }
+
+  details { margin-top: 22px; }
+  summary { font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; font-size: 12.5px; }
+  th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; }
+  td { color: var(--text-secondary); }
+  td.m { color: var(--text-primary); font-weight: 600; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
+
+  .foot { margin-top: 22px; font-size: 11.5px; line-height: 1.6; color: var(--text-muted); }
+  .foot a { color: var(--series-1); }
+
+  @media (max-width: 640px) {
+    .viz-root { padding: 26px 18px; }
+    .row, .axis { grid-template-columns: 92px 1fr; gap: 10px; }
+    .note { grid-template-columns: 1fr; gap: 12px; }
+    .tip { font-size: 12px; left: calc(100% + 6px); }
+  }
+</style>
+</head>
+<body>
+<div class="viz-root">
+
+  <p class="kicker">cost-per-turn</p>
+  <h1>What a million tokens costs — six models, one API key</h1>
+  <p class="sub">Every model below is reachable from a single OpenRouter key, so switching between them is a keystroke rather than a new account. These are <strong>list rates</strong>, not what a task costs — the price you're quoted and the price you pay are different numbers.</p>
+
+  <div class="legend">
+    <span><i class="swatch" style="background:var(--series-1)"></i> Input&nbsp;— $ per 1M tokens</span>
+    <span><i class="swatch" style="background:var(--series-2)"></i> Output&nbsp;— $ per 1M tokens</span>
+  </div>
+
+  <div class="plot" id="plot"></div>
+
+  <div class="note">
+    <p><b>A 33× spread</b>Output tokens run from $1.50 to $50 per million across this list — and every one of them answers the same prompt in the same harness.</p>
+    <p><b>Price is not tier</b>GPT-5.6 Sol Pro costs more per output token than Claude Opus ($30 vs $25). Vendor pricing doesn't sort into a clean ladder.</p>
+    <p><b>Cheapest ≠ worst</b>Claude Sonnet — the least expensive frontier model here — was the only one to score 20/20 in my action-items experiment. Sticker price predicts your bill, not your result.</p>
+  </div>
+
+  <details>
+    <summary>Table view — all values</summary>
+    <table>
+      <thead><tr><th>Model</th><th>Slug</th><th>Input $/M</th><th>Output $/M</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </details>
+
+  <p class="foot">
+    Source: OpenRouter models API, retrieved <strong>2026-08-16</strong>. Prices move — re-check before quoting.
+    Anthropic <code>~*-latest</code> aliases priced identically to their pinned slugs on this date.
+    Part of <a href="https://github.com/amr05008/cost-per-turn">amr05008/cost-per-turn</a>.
+  </p>
+</div>
+
+<script>
+const MAX = 50, TICKS = [0,10,20,30,40,50];
+const DATA = [
+  { name:"Claude Fable",  vendor:"Anthropic", slug:"~anthropic/claude-fable-latest",  in:10.00, out:50.00 },
+  { name:"GPT-5.6 Sol Pro", vendor:"OpenAI",  slug:"openai/gpt-5.6-sol-pro",          in: 5.00, out:30.00 },
+  { name:"Claude Opus",   vendor:"Anthropic", slug:"~anthropic/claude-opus-latest",   in: 5.00, out:25.00 },
+  { name:"Kimi K3",       vendor:"Moonshot",  slug:"moonshotai/kimi-k3",              in: 3.00, out:15.00 },
+  { name:"Claude Sonnet", vendor:"Anthropic", slug:"~anthropic/claude-sonnet-latest", in: 2.00, out:10.00 },
+  { name:"Muse Glimmer 30B", vendor:"Meta",   slug:"meta/muse-glimmer-30b",           in: 0.35, out: 1.50 },
+];
+const money = v => "$" + (v % 1 ? v.toFixed(2) : v.toFixed(0));
+// every bar, gridline and tick divides the same track width minus the label gutter
+const pct = v => `calc((100% - var(--lab)) * ${v / MAX})`;
+
+const plot = document.getElementById("plot");
+const grid = document.createElement("div");
+grid.className = "grid";
+grid.innerHTML = TICKS.map(t =>
+  `<i style="left:calc(132px + 16px + (100% - 132px - 16px - var(--lab)) * ${t/MAX})"></i>`).join("");
+plot.appendChild(grid);
+
+plot.insertAdjacentHTML("beforeend", DATA.map(d => `
+  <div class="row">
+    <div class="name">${d.name}<span class="vendor">${d.vendor}</span></div>
+    <div class="track">
+      <div class="bar in"  style="width:${pct(d.in)}"  title="${d.name} — input ${money(d.in)} per 1M tokens"></div>
+      <div class="bar out" style="width:${pct(d.out)}" title="${d.name} — output ${money(d.out)} per 1M tokens"><span class="tip">${money(d.out)}</span></div>
+    </div>
+  </div>`).join(""));
+
+plot.insertAdjacentHTML("beforeend", `
+  <div class="axis"><div></div><div class="ticks">
+    ${TICKS.map(t => `<b style="left:calc((100% - var(--lab)) * ${t/MAX})">$${t}</b>`).join("")}
+  </div></div>`);
+
+document.getElementById("tbody").innerHTML = DATA.map(d => `
+  <tr><td class="m">${d.name}</td><td><code>${d.slug}</code></td><td>${money(d.in)}</td><td>${money(d.out)}</td></tr>`).join("");
+</script>
+</body>
+</html>

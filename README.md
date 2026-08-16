@@ -209,6 +209,33 @@ no usage at all. Regenerate it deterministically with
 - **Turn = one API request**, not one thing you typed. A single prompt usually
   costs several turns.
 
+## Figures
+
+Reference charts, kept here so they can be linked to rather than screenshotted.
+Each one carries the date its numbers were pulled — prices move, and a figure
+without an `as_of` is a figure you can't trust six weeks later.
+
+### What a million tokens costs
+
+Six models reachable from a single OpenRouter key, list rates as of 2026-08-16.
+Source: [`figures/model-pricing.html`](figures/model-pricing.html) — open it for
+the hover values and the full table.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="figures/model-pricing-dark.png">
+  <img alt="Horizontal bar chart comparing input and output token prices for six models. Output rates: Claude Fable $50, GPT-5.6 Sol Pro $30, Claude Opus $25, Kimi K3 $15, Claude Sonnet $10, Muse Glimmer 30B $1.50 per million tokens." src="figures/model-pricing-light.png">
+</picture>
+
+Three things this chart is for:
+
+- **A 33× spread in output pricing** across models that all answer the same
+  prompt in the same harness.
+- **Price is not tier.** GPT-5.6 Sol Pro costs more per output token than Claude
+  Opus. Vendor pricing doesn't sort into a clean ladder.
+- **List rate is not what a task costs.** That's the whole point of the
+  experiments below — the cheapest model here is not the cheapest *result*, and
+  the most expensive one isn't the best one either.
+
 ## Where this is going
 
 Step one was the baseline: make spend visible live (the status line) and
