@@ -1,0 +1,11 @@
+date:          2026-08-16T17:09:48Z
+pi:            0.84.1
+ollama:        0.32.13
+ollama_ps:     {"models":[{"name":"muse-glimmer:30b-mlx","model":"muse-glimmer:30b-mlx","size":21939586216,"digest":"ef32a55b4976faa955cbab0462d09bd081351ef5b87d73d8fcd299bf17c111d7","details":{"parent_model":"","format":"safetensors","family":"","families":null,"parameter_size":"","quantization_level":""},"expires_at":"2026-08-16T14:39:48.813641-04:00","size_vram":21939586216,"context_length":32768}]}
+harness_host:  Aarons-MacBook-Pro.local (pi + tools run here)
+model_host:    see README.md — hardware/RAM/quant/engine are published beside the number
+reps_per_cell: 20
+prompt_sha:    54195771c5017627
+fixture_sha:   757338e7f994a209
+key_sha:       d8c76fce674ae85b
+pairs_with:    ../runs and ../effort-sweep/runs (same fixture, prompt, key, scorer)

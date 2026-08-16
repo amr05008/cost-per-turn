@@ -1,0 +1,18 @@
+warming muse-glimmer:30b-mlx ... loaded in 28s
+date:          2026-08-16T16:59:44Z
+pi:            0.84.1
+ollama:        0.32.13
+ollama_ps:     {"models":[{"name":"muse-glimmer:30b-mlx","model":"muse-glimmer:30b-mlx","size":21267791084,"digest":"ef32a55b4976faa955cbab0462d09bd081351ef5b87d73d8fcd299bf17c111d7","details":{"parent_model":"","format":"safetensors","family":"","families":null,"parameter_size":"","quantization_level":""},"expires_at":"2026-08-16T14:29:44.839388-04:00","size_vram":21267791084,"context_length":32768}]}
+harness_host:  Aarons-MacBook-Pro.local (pi + tools run here)
+model_host:    see README.md — hardware/RAM/quant/engine are published beside the number
+reps_per_cell: 1
+prompt_sha:    54195771c5017627
+fixture_sha:   757338e7f994a209
+key_sha:       d8c76fce674ae85b
+pairs_with:    ../runs and ../effort-sweep/runs (same fixture, prompt, key, scorer)
+
+[l01] glimmer-high (rep 1) ... ok  (563s)
+
+1 ok · 0 skipped · 0 missing action-items.md
+Costs:  python3 ../../../scripts/extract-runs.py runs   (cost will be $0 — that's the point)
+Score:  ./score.sh

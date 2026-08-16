@@ -15,17 +15,18 @@ you already own, and a machine you can't use for anything else while it runs.
 Apache 2.0, 128K context, "purpose-built for autonomous agentic tasks on
 consumer hardware." Controllable reasoning: `low` / `medium` / `high` / `xhigh`.
 
-Run through **Ollama's MLX engine** as `muse-glimmer:30b-mlx` (21 GB on disk).
-Ollama's GGUF build `muse-glimmer:30b` (18 GB) is the fallback if the MLX build
-won't fit — whichever ran is recorded in `runs/meta.txt` (`ollama_ps`) and must
-be printed beside the number.
+Run through **Ollama's MLX engine** as `muse-glimmer:30b-mlx` (21 GB on disk;
+it fit, and ran at 100% GPU — see `runs/meta.txt`). The GGUF build
+`muse-glimmer:30b` (18 GB) was the fallback and was not needed.
+
+**Results: [`RESULTS.md`](RESULTS.md).**
 
 ## The machine — publish this beside every number
 
 | | |
 | --- | --- |
 | model host | **2021 MacBook Pro 14", Apple M1 Pro** (8-core: 6P/2E), **32 GB** unified memory, macOS 26.3.1 |
-| runtime | Ollama _(version in `runs/meta.txt`)_, MLX engine, context slot 32,768 |
+| runtime | **Ollama 0.32.13**, MLX engine, `muse-glimmer:30b-mlx` = 32.3B params, **nvfp4**, 21 GB; context slot 32,768; DFlash on |
 | harness host | M3 Pro (36 GB) — runs pi 0.84.1 and the tools, same as every other cell |
 | link | SSH tunnel, loopback to loopback; adds milliseconds, never seconds |
 | also on the box | the always-on Discord channel agent (`claude`, ~0.9 GB) — left running; noted here so the wall-clock isn't read as a clean-room number |
