@@ -93,7 +93,7 @@ ollama pull muse-glimmer:30b-mlx
 # M3: pi's ~/.pi/agent/models.json has an `ollama` provider pointing at
 # http://127.0.0.1:11434/v1 with muse-glimmer:30b-mlx priced at $0.
 # Open the tunnel, then run from this directory:
-ssh -f -N -L 11434:127.0.0.1:11434 cos@cos-m1
+ssh -f -N -L 11434:127.0.0.1:11434 <user>@<local-mac>
 ./run.sh 1                     # smoke test — time it before committing to 20
 nohup caffeinate -i ./run.sh > batch.log 2>&1 &
 python3 ../../../scripts/extract-runs.py runs

@@ -9,7 +9,7 @@
 #
 # Topology used for the published numbers: pi runs on the M3 (same as every
 # other cell); the model runs on the M1 Pro under Ollama, reached over an SSH
-# tunnel (ssh -N -L 11434:127.0.0.1:11434 cos@cos-m1). Tools (read/write/bash)
+# tunnel (ssh -N -L 11434:127.0.0.1:11434 <user>@<local-mac>). Tools (read/write/bash)
 # therefore execute exactly where they did for the cloud cells. Only the model
 # endpoint moved.
 #
