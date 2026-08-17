@@ -1,6 +1,6 @@
-# What 294 runs across four tasks actually showed
+# What 314 runs across four tasks actually showed
 
-**2026-08-14 · 294 agent sessions · $45.71 total**
+**2026-08-14 · 294 agent sessions · $45.71 total** · *+20 local runs at $0.00 on 2026-08-16 (4c below)*
 
 | task | shape | runs | spend |
 | --- | --- | --- | --- |
@@ -9,6 +9,7 @@
 | 3 · turn a commit log into release notes | compression + audience judgement | 20 | $2.74 |
 | 4 · pull action items out of call notes | **objective, checkable answer** | 60 | $2.57 |
 | 4b · effort sweep, 6 models × 2 levels | same fixture, price ladder | 180 | $2.23 |
+| 4c · local model — Muse Glimmer 30B on an M1 Pro | same fixture, free but paid in wall-clock | 20 | $0.00 |
 
 Task 1 is a pilot, not a valid comparison — see `task-1/RESULTS.md` for why.
 Tasks 2, 3 and 4 are clean.
@@ -101,6 +102,14 @@ it's mid-priced, above Sonnet. No genuinely cheap model was tested here until
 task 4b.
 
 ---
+
+**Added 2026-08-16 — the local row.** A 30B open model on a laptop (Muse Glimmer,
+Ollama MLX, 2021 M1 Pro / 32 GB) went 0/20 shippable at $0.00 and ~7 min per
+run — below the cliff, on Haiku's side. But it failed *unlike* anything else in
+the grid: every run listed the same three items, all correct, zero surplus; it
+saw the two implied items in its reasoning each time and rejected them as "offer,
+not commitment." Precise and capped, not noisy. See
+[`task-4/local/RESULTS.md`](task-4/local/RESULTS.md).
 
 ## What holds, with boundaries now attached
 

@@ -10,11 +10,12 @@ costs you in quality.
 | **task-1** | Open-ended analysis of a live analytics dataset | private PostHog project | pilot run 2026-08-13; not reproducible by others (see below) |
 | **task-2** | Bounded generation — a markdown doc into an HTML slide deck | ships in this repo | done — 15 runs + a 5-run follow-up |
 | **task-3** | Compression + audience judgement — a commit log into release notes | ships in this repo | done — 20 runs |
+| **task-4** | Objective extraction — action items out of synthetic call notes, graded by `diff` | ships in this repo | done — 60 runs + a 180-run effort sweep (6 models × 2 levels) + a 20-run local-model cell (`task-4/local/`) |
 
 **Adding one?** [`HOW-TO-ADD-AN-EXPERIMENT.md`](HOW-TO-ADD-AN-EXPERIMENT.md) —
 the design recipe, the checklist, what's already settled, and `_template/`.
 
-**Start here: [`FINDINGS.md`](FINDINGS.md)** — what 54 runs across three tasks
+**Start here: [`FINDINGS.md`](FINDINGS.md)** — what 314 runs across four tasks
 showed, and what would be worth running next.
 
 ## Read these in order

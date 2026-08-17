@@ -23,6 +23,10 @@ changed is the most useful thing this task produced.**
 > **recall 5/5 and at most one `unassigned`**. One Opus run fails it. The rule
 > still agrees 20/20 with the human pass below; see
 > [`effort-sweep/RESULTS.md`](effort-sweep/RESULTS.md) for the full accounting.
+>
+> **Two more cells share this fixture, key and scorer:** the effort sweep
+> ([`effort-sweep/`](effort-sweep/), 6 models × 2 levels, n=20 each) and a local
+> 30B model on an M1 Pro ([`local/`](local/), 0/20 shippable, $0, ~7 min/run).
 
 **The mechanical metric and the human disagreed on 25% of the sample, and every
 single disagreement ran the same direction:** runs the scorer failed, the human
