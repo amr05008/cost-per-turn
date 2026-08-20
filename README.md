@@ -217,24 +217,26 @@ without an `as_of` is a figure you can't trust six weeks later.
 
 ### What a million tokens costs
 
-Six models reachable from a single OpenRouter key, list rates as of 2026-08-16.
-Source: [`figures/model-pricing.html`](figures/model-pricing.html) — open it for
-the hover values and the full table.
+The seven models used in the experiments, list rates as of 2026-08-19. Six are
+cloud models priced off OpenRouter; Muse Glimmer 30B ran locally, so it sits at
+$0 per token. Source: [`figures/model-pricing.html`](figures/model-pricing.html)
+— open it for the hover values and the full table.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="figures/model-pricing-dark.png">
-  <img alt="Horizontal bar chart comparing input and output token prices for six models. Output rates: Claude Fable $50, GPT-5.6 Sol Pro $30, Claude Opus $25, Kimi K3 $15, Claude Sonnet $10, Muse Glimmer 30B $1.50 per million tokens." src="figures/model-pricing-light.png">
+  <img alt="Horizontal bar chart comparing input and output token prices for the seven models used in the experiments. Output rates per million tokens: Claude Opus 5 $25, Kimi K3 $15, Claude Sonnet 5 $10, Claude Haiku 4.5 $5, GPT-5.4-mini $4.50, GPT-5.4-nano $1.25, Muse Glimmer 30B $0 because it ran locally." src="figures/model-pricing-light.png">
 </picture>
 
 Three things this chart is for:
 
-- **A 33× spread in output pricing** across models that all answer the same
-  prompt in the same harness.
-- **Price is not tier.** GPT-5.6 Sol Pro costs more per output token than Claude
-  Opus. Vendor pricing doesn't sort into a clean ladder.
+- **A 20× spread in output pricing** across the six cloud models, from $1.25
+  (GPT-5.4-nano) to $25 (Opus 5), plus a local model that costs nothing per
+  token and about seven minutes per run.
+- **Price is not tier.** Kimi K3 lists above Sonnet 5, yet Sonnet 5
+  outperformed it in every experiment where both ran.
 - **List rate is not what a task costs.** That's the whole point of the
-  experiments below — the cheapest model here is not the cheapest *result*, and
-  the most expensive one isn't the best one either.
+  experiments below — Haiku 4.5 is half Sonnet 5's rate on paper and about 8×
+  the cost per usable result on the action-items task.
 
 ## Where this is going
 

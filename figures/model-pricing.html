@@ -6,17 +6,19 @@
 <title>What a million tokens costs</title>
 <style>
   /* Tokens live on :root so the page gutter outside the card reads them too.
-     Light is the bare-:root default; dark is *selected* (its own steps from the
-     same hues, validated against the dark surface), declared under both the OS
-     media query and the explicit theme stamp so a toggle wins either way. */
+     Light is the bare-:root default and sits on pure white so the rendered PNG
+     drops onto a white blog page with no visible card edge. Dark is *selected*
+     (its own steps from the same hues, validated against the dark surface),
+     declared under both the OS media query and the explicit theme stamp so a
+     toggle wins either way. */
   :root {
     color-scheme: light;
-    --surface-1:      #fcfcfb;
-    --surface-2:      #f2f2f0;
+    --surface-1:      #ffffff;
+    --surface-2:      #f4f4f2;
     --text-primary:   #0b0b0b;
     --text-secondary: #52514e;
     --text-muted:     #86847e;
-    --rule:           #e2e1dd;
+    --rule:           #e5e5e2;
     --series-1:       #2a78d6;
     --series-2:       #eb6834;
   }
@@ -93,10 +95,15 @@
   }
   .bar.in  { background: var(--series-1); margin-bottom: 2px; } /* 2px surface gap */
   .bar.out { background: var(--series-2); }
+  /* a model that ran locally has no per-token price: no bars, just a label
+     centred where the pair of bars would sit, offset like every other tip */
+  .track.local { min-height: 32px; }
+  .track.local .tip { left: 9px; }
   .tip {
     position: absolute; left: calc(100% + 9px); top: 50%; transform: translateY(-50%);
     font-size: 13px; font-weight: 650; color: var(--text-primary); white-space: nowrap;
   }
+  .tip em { font-style: normal; font-weight: 400; color: var(--text-muted); margin-left: 6px; }
   .axis {
     display: grid; grid-template-columns: 132px 1fr; gap: 16px;
     font-size: 11.5px; color: var(--text-muted); padding-top: 8px;
@@ -136,8 +143,8 @@
 <div class="viz-root">
 
   <p class="kicker">cost-per-turn</p>
-  <h1>What a million tokens costs — six models, one API key</h1>
-  <p class="sub">Every model below is reachable from a single OpenRouter key, so switching between them is a keystroke rather than a new account. These are <strong>list rates</strong>, not what a task costs — the price you're quoted and the price you pay are different numbers.</p>
+  <h1>What a million tokens costs across various models</h1>
+  <p class="sub">List rates for the seven models used in the experiments, as quoted by OpenRouter. Muse Glimmer 30B ran locally on a 32 GB M1 Pro, so it cost nothing per token. These are <strong>list rates</strong>, not what a task costs, the price you're quoted and the price you pay are different numbers.</p>
 
   <div class="legend">
     <span><i class="swatch" style="background:var(--series-1)"></i> Input&nbsp;— $ per 1M tokens</span>
@@ -147,9 +154,9 @@
   <div class="plot" id="plot"></div>
 
   <div class="note">
-    <p><b>A 33× spread</b>Output tokens run from $1.50 to $50 per million across this list — and every one of them answers the same prompt in the same harness.</p>
-    <p><b>Price is not tier</b>GPT-5.6 Sol Pro costs more per output token than Claude Opus ($30 vs $25). Vendor pricing doesn't sort into a clean ladder.</p>
-    <p><b>Cheapest ≠ worst</b>Claude Sonnet — the least expensive frontier model here — was the only one to score 20/20 in my action-items experiment. Sticker price predicts your bill, not your result.</p>
+    <p><b>A 20× spread</b>Output tokens run from $1.25 (GPT-5.4-nano) to $25 (Opus 5) per million across the six cloud models. The local model is $0 per token and about 7 minutes per run.</p>
+    <p><b>Price is not tier</b>Kimi K3 lists above Sonnet 5 ($15 vs $10 per million output), yet Sonnet 5 outperformed it in every experiment where both ran.</p>
+    <p><b>Cheap per token ≠ cheap per result</b>Haiku 4.5 lists at half Sonnet 5's rate but cost about 8× more per usable result on the action-items task ($0.22 vs $0.03). GPT-5.4-nano, the cheapest model here, produced 1 usable result in 40 runs.</p>
   </div>
 
   <details>
@@ -161,21 +168,22 @@
   </details>
 
   <p class="foot">
-    Source: OpenRouter models API, retrieved <strong>2026-08-16</strong>. Prices move — re-check before quoting.
-    Anthropic <code>~*-latest</code> aliases priced identically to their pinned slugs on this date.
+    Source: OpenRouter models API, retrieved <strong>2026-08-19</strong>. Prices move. Re-check before quoting. Sonnet 5's $2 → $10 is an introductory rate through 2026-08-31 (standard $3 → $15). Muse Glimmer 30B's hosted OpenRouter rate is $0.35 → $1.50; the experiments ran it locally.
     Part of <a href="https://github.com/amr05008/cost-per-turn">amr05008/cost-per-turn</a>.
   </p>
 </div>
 
 <script>
-const MAX = 50, TICKS = [0,10,20,30,40,50];
+const MAX = 25, TICKS = [0,5,10,15,20,25];
 const DATA = [
-  { name:"Claude Fable",  vendor:"Anthropic", slug:"~anthropic/claude-fable-latest",  in:10.00, out:50.00 },
-  { name:"GPT-5.6 Sol Pro", vendor:"OpenAI",  slug:"openai/gpt-5.6-sol-pro",          in: 5.00, out:30.00 },
-  { name:"Claude Opus",   vendor:"Anthropic", slug:"~anthropic/claude-opus-latest",   in: 5.00, out:25.00 },
-  { name:"Kimi K3",       vendor:"Moonshot",  slug:"moonshotai/kimi-k3",              in: 3.00, out:15.00 },
-  { name:"Claude Sonnet", vendor:"Anthropic", slug:"~anthropic/claude-sonnet-latest", in: 2.00, out:10.00 },
-  { name:"Muse Glimmer 30B", vendor:"Meta",   slug:"meta/muse-glimmer-30b",           in: 0.35, out: 1.50 },
+  { name:"Claude Opus 5",   vendor:"Anthropic", slug:"anthropic/claude-opus-5",   in:5.00, out:25.00 },
+  { name:"Kimi K3",         vendor:"Moonshot",  slug:"moonshotai/kimi-k3",        in:3.00, out:15.00 },
+  { name:"Claude Sonnet 5", vendor:"Anthropic", slug:"anthropic/claude-sonnet-5", in:2.00, out:10.00 },
+  { name:"Claude Haiku 4.5",vendor:"Anthropic", slug:"anthropic/claude-haiku-4.5",in:1.00, out: 5.00 },
+  { name:"GPT-5.4-mini",    vendor:"OpenAI",    slug:"openai/gpt-5.4-mini",       in:0.75, out: 4.50 },
+  { name:"GPT-5.4-nano",    vendor:"OpenAI",    slug:"openai/gpt-5.4-nano",       in:0.20, out: 1.25 },
+  { name:"Muse Glimmer 30B",vendor:"Meta · local", slug:"meta/muse-glimmer-30b",  in:0.00, out: 0.00,
+    local:"ran locally · ~7 min per run", hosted:"hosted rate $0.35 → $1.50" },
 ];
 const money = v => "$" + (v % 1 ? v.toFixed(2) : v.toFixed(0));
 // every bar, gridline and tick divides the same track width minus the label gutter
@@ -188,7 +196,13 @@ grid.innerHTML = TICKS.map(t =>
   `<i style="left:calc(132px + 16px + (100% - 132px - 16px - var(--lab)) * ${t/MAX})"></i>`).join("");
 plot.appendChild(grid);
 
-plot.insertAdjacentHTML("beforeend", DATA.map(d => `
+plot.insertAdjacentHTML("beforeend", DATA.map(d => d.local ? `
+  <div class="row">
+    <div class="name">${d.name}<span class="vendor">${d.vendor}</span></div>
+    <div class="track local" title="${d.name} — $0 per 1M tokens in and out, ${d.local}">
+      <span class="tip">$0<em>${d.local}</em></span>
+    </div>
+  </div>` : `
   <div class="row">
     <div class="name">${d.name}<span class="vendor">${d.vendor}</span></div>
     <div class="track">
@@ -203,7 +217,7 @@ plot.insertAdjacentHTML("beforeend", `
   </div></div>`);
 
 document.getElementById("tbody").innerHTML = DATA.map(d => `
-  <tr><td class="m">${d.name}</td><td><code>${d.slug}</code></td><td>${money(d.in)}</td><td>${money(d.out)}</td></tr>`).join("");
+  <tr><td class="m">${d.name}</td><td><code>${d.slug}</code>${d.hosted ? ` <span>(${d.local}; ${d.hosted})</span>` : ""}</td><td>${money(d.in)}</td><td>${money(d.out)}</td></tr>`).join("");
 </script>
 </body>
 </html>
